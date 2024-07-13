@@ -1,0 +1,14 @@
+diff --git a/lua/Makefile b/lua/Makefile
+index 82066ad..f820d9d 100644
+--- a/lua/Makefile
++++ b/lua/Makefile
+@@ -14,8 +14,7 @@ DOWNLOAD_SITE =     http://www.lua.org/ftp
+ DOWNLOAD_FILES =    ${PORTNAME}-${PORTVERSION}.tar.gz
+ 
+ TARGET =            liblua.a
+-INSTALLED_HDRS =    src/lua.h src/luaconf.h src/lualib.h src/lauxlib.h \
+-                    src/lua.hpp
++INSTALLED_HDRS =    src/lua.h src/luaconf.h src/lualib.h src/lauxlib.h
+ HDR_INSTDIR =       lua
+ 
+ # KOS Distributed extras (to be copied into the build tree)

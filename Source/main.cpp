@@ -19,8 +19,19 @@
 #ifdef GPERF_HEAP_MAIN
 #include <gperftools/heap-profiler.h>
 #endif
+#ifdef __DREAMCAST__
+#include <kos.h>
+#endif
 
 #include "diablo.h"
+
+#ifdef __DREAMCAST__
+//fchmod fails to link on the dreamcast, this stub is provided as a workaround
+extern "C" int fchmod(int fd, mode_t mode) {
+    // Your implementation here
+    return 0; // Example return value
+}
+#endif
 
 #if !defined(__APPLE__)
 extern "C" const char *__asan_default_options() // NOLINT(bugprone-reserved-identifier, readability-identifier-naming)
@@ -31,6 +42,9 @@ extern "C" const char *__asan_default_options() // NOLINT(bugprone-reserved-iden
 
 extern "C" int main(int argc, char **argv)
 {
+#ifdef __DREAMCAST__
+	chdir("/cd");
+#endif
 #ifdef __SWITCH__
 	switch_romfs_init();
 	switch_enable_network();

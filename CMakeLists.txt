@@ -511,6 +511,10 @@ if(NXDK)
   add_custom_target(nxdk_xbe DEPENDS "${_xbe_path}")
 endif()
 
+#if(PLATFORM_DREAMCAST)
+#    kos_add_romdisk(${BIN_TARGET} ${DEVILUTIONX_ASSETS_OUTPUT_DIRECTORY})
+#endif()
+
 if(CPACK AND (APPLE OR BUILD_ASSETS_MPQ OR SRC_DIST))
   if(WIN32)
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")

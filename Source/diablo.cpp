@@ -105,6 +105,10 @@
 #include <gperftools/heap-profiler.h>
 #endif
 
+#ifdef __DREAMCAST__
+#include <kos.h>
+#endif
+
 namespace devilution {
 
 uint32_t DungeonSeeds[NUMLEVELS];
@@ -1008,6 +1012,7 @@ void DiabloParseFlags(int argc, char **argv)
 	bool createDemoReference = false;
 #endif
 	for (int i = 1; i < argc; i++) {
+		printf("Flag %d: %s\n", i, argv[i]);
 		const std::string_view arg = argv[i];
 		if (arg == "-h" || arg == "--help") {
 			PrintHelpAndExit();
@@ -1155,7 +1160,12 @@ void CheckArchivesUpToDate()
 		            "\n"
 		            "Make sure devilutionx.mpq is in the game folder and that it is up to date."));
 	} else if (fontsMpqOutOfDate) {
+#ifdef __DREAMCAST__
+		//todo fixme for the dreamcast
+		Log("Please update fonts.mpq to the latest version");
+#else
 		app_fatal(_("Please update fonts.mpq to the latest version"));
+#endif
 	}
 }
 
@@ -2544,15 +2554,46 @@ void setOnInitialized(void (*callback)())
 }
 #endif
 
+void cdfs_test(void) {
+    file_t d;
+    dirent_t *de;
+
+    printf("Reading directory from CD-Rom:\r\n");
+
+    /* Read and print the root directory */
+    d = fs_open("/vmu/a1/", O_RDONLY | O_DIR);
+
+    if(d == 0) {
+        printf("Can't open root!\r\n");
+        return;
+    }
+
+    while((de = fs_readdir(d))) {
+        printf("%s  /  ", de->name);
+
+        if(de->size >= 0) {
+            printf("%d\r\n", de->size);
+        }
+        else {
+            printf("DIR\r\n");
+        }
+    }
+
+    fs_close(d);
+}
+
 int DiabloMain(int argc, char **argv)
 {
-#ifdef _DEBUG
+	printf("DiabloMain\n");
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_DEBUG);
-#endif
 
 	DiabloParseFlags(argc, argv);
+	printf("Flags parsed\n");
 	InitKeymapActions();
+	printf("Keymap actions initialized\n");
 	InitPadmapActions();
+	printf("Padmap actions initialized\n");
+	cdfs_test();
 
 	// Need to ensure devilutionx.mpq (and fonts.mpq if available) are loaded before attempting to read translation settings
 	LoadCoreArchives();
@@ -2977,9 +3018,7 @@ void LoadGameLevel(bool firstflag, lvl_entry lvldir)
 				[[maybe_unused]] uint32_t mid3Seed = GetLCGEngineState();
 				InitMissiles();
 				InitCorpses();
-#ifdef _DEBUG
 				SetDebugLevelSeedInfos(mid1Seed, mid2Seed, mid3Seed, GetLCGEngineState());
-#endif
 				SavePreLighting();
 				IncProgress();
 

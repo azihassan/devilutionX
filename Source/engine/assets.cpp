@@ -22,14 +22,18 @@ namespace {
 #ifdef UNPACKED_MPQS
 char *FindUnpackedMpqFile(char *relativePath)
 {
+	//Log("FindUnpackedMpqFile in {}", spawn_data_path);
 	char *path = nullptr;
 	const auto at = [&](const std::optional<std::string> &unpackedDir) -> bool {
 		if (!unpackedDir)
 			return false;
 		path = relativePath - unpackedDir->size();
 		std::memcpy(path, unpackedDir->data(), unpackedDir->size());
-		if (FileExists(path))
+		Log("\t\tpath = {}", path);
+		if (FileExists(path)) {
+			Log("\t\tFOUND!");
 			return true;
+		}
 		path = nullptr;
 		return false;
 	};
@@ -74,6 +78,7 @@ bool FindMpqFile(std::string_view filename, MpqArchive **archive, uint32_t *file
 #ifdef UNPACKED_MPQS
 AssetRef FindAsset(std::string_view filename)
 {
+	Log("UNPACKED_MPQS FindAsset {}", filename);
 	AssetRef result;
 	if (filename.empty() || filename.back() == '\\')
 		return result;
@@ -88,6 +93,7 @@ AssetRef FindAsset(std::string_view filename)
 	std::replace(relativePath, pathEnd, '\\', '/');
 #endif
 	// Absolute path:
+	Log("relativePath = {}", relativePath);
 	if (relativePath[0] == '/') {
 		if (FileExists(relativePath)) {
 			*BufCopy(result.path, std::string_view(relativePath, filename.size())) = '\0';
@@ -96,6 +102,7 @@ AssetRef FindAsset(std::string_view filename)
 	}
 
 	// Unpacked MPQ file:
+	Log("Calling FindUnpackedMpqFile(\"{}\")", relativePath);
 	char *const unpackedMpqPath = FindUnpackedMpqFile(relativePath);
 	if (unpackedMpqPath != nullptr) {
 		*BufCopy(result.path, std::string_view(unpackedMpqPath, pathEnd - unpackedMpqPath)) = '\0';
@@ -112,6 +119,7 @@ AssetRef FindAsset(std::string_view filename)
 	return result;
 }
 #else
+// ui_art\\title.pcx
 AssetRef FindAsset(std::string_view filename)
 {
 	AssetRef result;
@@ -121,8 +129,8 @@ AssetRef FindAsset(std::string_view filename)
 	std::string relativePath { filename };
 #ifndef _WIN32
 	std::replace(relativePath.begin(), relativePath.end(), '\\', '/');
+        // ui_art/title.pcx
 #endif
-
 	if (relativePath[0] == '/') {
 		result.directHandle = SDL_RWFromFile(relativePath.c_str(), "rb");
 		if (result.directHandle != nullptr) {
@@ -132,6 +140,7 @@ AssetRef FindAsset(std::string_view filename)
 
 	// Files in the `PrefPath()` directory can override MPQ contents.
 	{
+                // /vmu/a1/ui_art/title.pcx
 		const std::string path = paths::PrefPath() + relativePath;
 		result.directHandle = OpenOptionalRWops(path);
 		if (result.directHandle != nullptr) {
@@ -141,6 +150,7 @@ AssetRef FindAsset(std::string_view filename)
 	}
 
 	// Look for the file in all the MPQ archives:
+        // come back here
 	if (FindMpqFile(filename, &result.archive, &result.fileNumber)) {
 		result.filename = filename;
 		return result;
