@@ -90,6 +90,7 @@ void XorBlock(const uint32_t *shaResult, uint32_t *out)
 
 std::size_t codec_decode(std::byte *pbSrcDst, std::size_t size, const char *pszPassword)
 {
+	Log("codec_decode(pbSrcDst, {}, \"{}\")", size, pszPassword);
 	uint32_t buf[BlockSize];
 	uint32_t dst[SHA1HashSize];
 
@@ -112,17 +113,19 @@ std::size_t codec_decode(std::byte *pbSrcDst, std::size_t size, const char *pszP
 	memset(buf, 0, sizeof(buf));
 	const CodecSignature sig = GetCodecSignature(pbSrcDst);
 	if (sig.error > 0) {
+		Log("sig.error = {}", sig.error);
 		return 0;
 	}
 
 	SHA1Result(context, dst);
 	if (sig.checksum != dst[0]) {
-		LogError("Checksum mismatch signature={} vs calculated={}", sig.checksum, dst[0]);
+		Log("Checksum mismatch signature={} vs calculated={}", sig.checksum, dst[0]);
 		memset(dst, 0, sizeof(dst));
 		return 0;
 	}
 
 	size += sig.lastChunkSize - BlockSizeBytes;
+	Log("codec_decode OK");
 	return size;
 }
 
@@ -135,6 +138,7 @@ std::size_t codec_get_encoded_len(std::size_t dwSrcBytes)
 
 void codec_encode(std::byte *pbSrcDst, std::size_t size, std::size_t size64, const char *pszPassword)
 {
+	Log("codec_encode(pbSrcDst, {}, {}, \"{}\")", size, size64, pszPassword);
 	uint32_t buf[BlockSize];
 	uint32_t tmp[SHA1HashSize];
 	uint32_t dst[SHA1HashSize];

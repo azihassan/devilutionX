@@ -1,5 +1,6 @@
 #include "mpq/mpq_writer.hpp"
 
+#include <malloc.h>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -16,6 +17,10 @@
 #include "utils/language.h"
 #include "utils/log.hpp"
 #include "utils/str_cat.hpp"
+
+#ifdef __DREAMCAST__
+#include <kos/fs_ramdisk.h>
+#endif
 
 namespace devilution {
 
@@ -96,6 +101,7 @@ MpqWriter::MpqWriter(const char *path)
 	bool exists = FileExists(path);
 	const char *mode = "wb";
 	if (exists) {
+		Log("\tPath {} already exists, not recreating it", path);
 		mode = "r+b";
 		std::uintmax_t fileSize;
 		if (!GetFileSize(path, &fileSize)) {
@@ -106,6 +112,17 @@ MpqWriter::MpqWriter(const char *path)
 		size_ = static_cast<uint32_t>(fileSize);
 		Log("GetFileSize(\"{}\") = {}", path, size_);
 	} else {
+#ifdef __DREAMCAST__
+		auto baseName = std::string(path);
+		baseName.erase(0, dir.length() + 1);
+		Log("\tAllocating 1024 kB for path {} with basename {}", path, baseName);
+		int ramFileSize = 1.5 * 1024 * 1024;
+		void* buffer = calloc(ramFileSize, sizeof(std::byte));
+		memset(buffer, 0xFF, ramFileSize);
+		Log("\tMallocation succeeded ? {}", buffer != NULL);
+		int attach_result = fs_ramdisk_attach(baseName.c_str(), buffer, ramFileSize);
+		Log("\tAttach result: {}", attach_result);
+#endif
 	}
 	if (!stream_.Open(path, mode)) {
 		stream_.Close();
@@ -166,6 +183,7 @@ on_error:
 
 MpqWriter::~MpqWriter()
 {
+	malloc_stats();
 	if (!stream_.IsOpen())
 		return;
 	Log("Closing {}", name_);
@@ -176,8 +194,8 @@ MpqWriter::~MpqWriter()
 	stream_.Close();
 	if (result && size_ != 0) {
 		Log("ResizeFile(\"{}\", {})", name_, size_);
-		//result = true;
-		result = ResizeFile(name_.c_str(), size_);
+		result = true;
+		//result = ResizeFile(name_.c_str(), size_);
 	}
 	if (!result)
 		Log("Closing failed {}", name_);
@@ -335,6 +353,7 @@ bool MpqWriter::WriteHeaderAndTables()
 
 MpqBlockEntry *MpqWriter::AddFile(std::string_view filename, MpqBlockEntry *block, uint32_t blockIndex)
 {
+	Log("AddFile(\"{}\", block, {})", filename, blockIndex);
 	const MpqFileHash fileHash = CalculateMpqFileHash(filename);
 	if (GetHashIndex(fileHash) != HashEntryNotFound)
 		app_fatal(StrCat("Hash collision between \"", filename, "\" and existing file\n"));
@@ -361,6 +380,7 @@ MpqBlockEntry *MpqWriter::AddFile(std::string_view filename, MpqBlockEntry *bloc
 	entry.platform = 0;
 	entry.block = blockIndex;
 
+	Log("AddFile(\"{}\", block, {}) OK", filename, blockIndex);
 	return block;
 }
 
@@ -492,9 +512,11 @@ void MpqWriter::RemoveHashEntry(std::string_view filename)
 
 void MpqWriter::RemoveHashEntries(bool (*fnGetName)(uint8_t, char *))
 {
+	Log("RemoveHashEntries");
 	char pszFileName[MaxMpqPathSize];
 
 	for (uint8_t i = 0; fnGetName(i, pszFileName); i++) {
+		Log("RemoveHashEntriey(\"{}\")", pszFileName);
 		RemoveHashEntry(pszFileName);
 	}
 }
@@ -506,19 +528,24 @@ bool MpqWriter::WriteFile(std::string_view filename, const std::byte *data, size
 	RemoveHashEntry(filename);
 	blockEntry = AddFile(filename, nullptr, 0);
 	if (!WriteFileContents(data, static_cast<uint32_t>(size), blockEntry)) {
+		Log("WriteFileContents(data, {}, blockEntry) = false", static_cast<uint32_t>(size));
 		RemoveHashEntry(filename);
 		return false;
 	}
+	Log("WriteFileContents(data, {}, blockEntry) = true", static_cast<uint32_t>(size));
 	return true;
 }
 
 void MpqWriter::RenameFile(std::string_view name, std::string_view newName) // NOLINT(bugprone-easily-swappable-parameters)
 {
+	Log("RenameFile(\"{}\", \"{}\")", name, newName);
 	uint32_t index = FetchHandle(name);
 	if (index == HashEntryNotFound) {
+		Log("FetchNandle(\"{}\") = HashEntryNotFound", name);
 		return;
 	}
 
+	Log("FetchNandle(\"{}\") = {}", name, index);
 	MpqHashEntry *hashEntry = &hashTable_[index];
 	uint32_t block = hashEntry->block;
 	MpqBlockEntry *blockEntry = &blockTable_[block];
@@ -528,6 +555,7 @@ void MpqWriter::RenameFile(std::string_view name, std::string_view newName) // N
 
 bool MpqWriter::HasFile(std::string_view name) const
 {
+	Log("MpqWriter::HasFile(\"{}\") = {}", name, FetchHandle(name));
 	return FetchHandle(name) != HashEntryNotFound;
 }
 

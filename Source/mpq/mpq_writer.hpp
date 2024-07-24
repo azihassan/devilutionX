@@ -63,7 +63,7 @@ private:
 
 // Amiga cannot Seekp beyond EOF.
 // See https://github.com/bebbo/libnix/issues/30
-#ifndef __AMIGA__
+#if !defined(__AMIGA__) && !defined(__DREAMCAST__)
 #define CAN_SEEKP_BEYOND_EOF
 #endif
 

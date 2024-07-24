@@ -69,9 +69,9 @@ private:
 			const char *errorMessage = std::strerror(errno);
 			if (errorMessage == nullptr)
 				errorMessage = "";
-			LogError(LogCategory::System, fmtWithError.c_str(), args..., errorMessage);
+			Log(fmtWithError.c_str(), args..., errorMessage);
 		} else {
-			LogVerbose(LogCategory::System, fmt, args...);
+			Log(fmt, args...);
 		}
 		return ok;
 	}

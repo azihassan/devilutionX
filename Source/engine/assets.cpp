@@ -29,9 +29,9 @@ char *FindUnpackedMpqFile(char *relativePath)
 			return false;
 		path = relativePath - unpackedDir->size();
 		std::memcpy(path, unpackedDir->data(), unpackedDir->size());
-		Log("\t\tpath = {}", path);
+		//Log("\t\tpath = {}", path);
 		if (FileExists(path)) {
-			Log("\t\tFOUND!");
+			//Log("\t\tFOUND!");
 			return true;
 		}
 		path = nullptr;
@@ -78,7 +78,7 @@ bool FindMpqFile(std::string_view filename, MpqArchive **archive, uint32_t *file
 #ifdef UNPACKED_MPQS
 AssetRef FindAsset(std::string_view filename)
 {
-	Log("UNPACKED_MPQS FindAsset {}", filename);
+	//Log("UNPACKED_MPQS FindAsset {}", filename);
 	AssetRef result;
 	if (filename.empty() || filename.back() == '\\')
 		return result;
@@ -93,7 +93,7 @@ AssetRef FindAsset(std::string_view filename)
 	std::replace(relativePath, pathEnd, '\\', '/');
 #endif
 	// Absolute path:
-	Log("relativePath = {}", relativePath);
+	//Log("relativePath = {}", relativePath);
 	if (relativePath[0] == '/') {
 		if (FileExists(relativePath)) {
 			*BufCopy(result.path, std::string_view(relativePath, filename.size())) = '\0';
@@ -102,7 +102,7 @@ AssetRef FindAsset(std::string_view filename)
 	}
 
 	// Unpacked MPQ file:
-	Log("Calling FindUnpackedMpqFile(\"{}\")", relativePath);
+	//Log("Calling FindUnpackedMpqFile(\"{}\")", relativePath);
 	char *const unpackedMpqPath = FindUnpackedMpqFile(relativePath);
 	if (unpackedMpqPath != nullptr) {
 		*BufCopy(result.path, std::string_view(unpackedMpqPath, pathEnd - unpackedMpqPath)) = '\0';

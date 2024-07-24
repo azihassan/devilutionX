@@ -109,18 +109,18 @@ bool FileExists(const char *path)
 #elif defined(__DREAMCAST__)
 	int file = fs_open(path, O_RDONLY);
 	if(file != -1) {
-		Log("FileExists O_RDONLY {} = true", path);
+		//Log("FileExists O_RDONLY {} = true", path);
 		fs_close(file);
 		return true;
 	}
-	Log("FileExists O_RDONLY {} = false", path);
+	//Log("FileExists O_RDONLY {} = false", path);
 	file = fs_open(path, O_RDONLY | O_DIR);
 	if(file != -1) {
-		Log("FileExists O_RDONLY | O_DIR {} = true", path);
+		//Log("FileExists O_RDONLY | O_DIR {} = true", path);
 		fs_close(file);
 		return true;
 	}
-	Log("FileExists O_RDONLY | O_DIR {} = false", path);
+	//Log("FileExists O_RDONLY | O_DIR {} = false", path);
 	return false;
 #elif (_POSIX_C_SOURCE >= 200112L || defined(_BSD_SOURCE) || defined(__APPLE__)) && !defined(__ANDROID__)
 	return ::access(path, F_OK) == 0;
@@ -242,24 +242,49 @@ bool GetFileSize(const char *path, std::uintmax_t *size)
 #endif
 
 #elif defined(__DREAMCAST__)
-	file_t fh = fs_open(path, O_RDONLY);
-	if(fh == -1)
+	if(strncmp(path, "/ram", strlen("/ram")) == 0)
 	{
-		fs_close(fh);
-		LogVerbose("GetFileSize(\"{}\") = ERROR; fh = -1", path);
+		file_t ramDir = fs_open("/ram", O_RDONLY | O_DIR);
+		dirent_t *entry;
+		while(NULL != (entry = fs_readdir(ramDir))) {
+			char absolutePath[1024];
+			strcpy(absolutePath, "/ram/");
+			strcat(absolutePath, entry->name);
+			if(strcmp(absolutePath, path) == 0)
+			{
+				Log("strcmp({}, {}) = {} == 0", absolutePath, path, strcmp(absolutePath, path));
+				*size = entry->size;
+				fs_close(ramDir);
+				return true;
+			}
+		}
+		fs_close(ramDir);
 		return false;
 	}
-	uint64 result = fs_total64(fh);
-	fs_close(fh);
-	*size = static_cast<uintmax_t>(result);
-	LogVerbose("GetFileSize(\"{}\") = {} (casted to {})", path, result, *size);
-	return true;
+	else
+	{
+		file_t fh = fs_open(path, O_RDONLY);
+		if(fh == -1)
+		{
+			fs_close(fh);
+			//Log("GetFileSize(\"{}\") = ERROR; fh = -1", path);
+			return false;
+		}
+		size_t result = fs_total(fh);
+		fs_close(fh);
+		*size = static_cast<uintmax_t>(result);
+		//Log("GetFileSize(\"{}\") = {} (casted to {})", path, result, *size);
+		return true;
+	}
 #else
 	struct ::stat statResult;
-	if (::stat(path, &statResult) == -1)
+	if (::stat(path, &statResult) == -1) {
+		Log("::stat(\"{}\", &statResult) = -1", path);
 		return false;
+	}
 	*size = static_cast<uintmax_t>(statResult.st_size);
 	return true;
+
 #endif
 }
 
@@ -336,31 +361,15 @@ bool TruncateFile(const char *path, off_t size)
 {
     Log("TruncateFile(\"{}\", {})", path, size);
     void *contents;
-    //todo only read up to size
     size_t read = fs_load(path, &contents);
     if(read == -1)
     {
-	    Log("fs_load(\"{}\", &contents) = -1", path);
-	    return false;
+        return false;
     }
 
-    if(-1 == fs_unlink(path))
-    {
-	    Log("fs_unlink(\"{}\") = -1", path);
-    }
+    fs_unlink(path);
     file_t fh = fs_open(path, O_WRONLY);
-    if(fh == -1)
-    {
-	    Log("fs_open(\"{}\", O_WRONLY) = -1", path);
-	    return false;
-    }
     int result = fs_write(fh, contents, size);
-    if(result == -1)
-    {
-	    Log("fs_write(fh, contents, {}) = -1", size);
-	    return false;
-    }
-    fs_close(fh);
     free(contents);
     return result != -1;
 }
