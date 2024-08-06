@@ -7,7 +7,7 @@ RUN git clone https://github.com/diasurgical/devilutionx-mpq-tools/ && \
     cmake --build build-rel && \
     cmake --install build-rel
 
-RUN echo "Cloning project..."
+RUN echo "Cloning project....."
 WORKDIR /opt/toolchains/dc/kos/
 RUN git clone -b ci https://github.com/azihassan/devilutionX.git
 

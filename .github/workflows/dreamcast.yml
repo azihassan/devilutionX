@@ -5,7 +5,7 @@ on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - master
-      - ci
+        #- ci
     paths-ignore:
       - '*.md'
       - 'docs/**'

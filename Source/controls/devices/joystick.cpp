@@ -12,6 +12,7 @@ std::vector<Joystick> Joystick::joysticks_;
 
 StaticVector<ControllerButtonEvent, 4> Joystick::ToControllerButtonEvents(const SDL_Event &event)
 {
+	Log("Joystick::ToControllerButtonEvents({})", event.jbutton.button);
 	switch (event.type) {
 	case SDL_JOYBUTTONDOWN:
 	case SDL_JOYBUTTONUP: {
@@ -34,7 +35,7 @@ StaticVector<ControllerButtonEvent, 4> Joystick::ToControllerButtonEvents(const 
 			return { ControllerButtonEvent { ControllerButton_BUTTON_X, up } };
 #endif
 #ifdef JOY_BUTTON_Y
-		case JOY_BUTTON_Y:
+		case JOY_BUTTON_Y: //3
 			return { ControllerButtonEvent { ControllerButton_BUTTON_Y, up } };
 #endif
 #ifdef JOY_BUTTON_LEFTSTICK
@@ -54,7 +55,7 @@ StaticVector<ControllerButtonEvent, 4> Joystick::ToControllerButtonEvents(const 
 			return { ControllerButtonEvent { ControllerButton_BUTTON_RIGHTSHOULDER, up } };
 #endif
 #ifdef JOY_BUTTON_TRIGGERLEFT
-		case JOY_BUTTON_TRIGGERLEFT:
+		case JOY_BUTTON_TRIGGERLEFT: //3
 			return { ControllerButtonEvent { ControllerButton_AXIS_TRIGGERLEFT, up } };
 #endif
 #ifdef JOY_BUTTON_TRIGGERRIGHT
@@ -300,25 +301,25 @@ bool Joystick::ProcessAxisMotion(const SDL_Event &event)
 #if defined(JOY_AXIS_LEFTX) || defined(JOY_AXIS_LEFTY) || defined(JOY_AXIS_RIGHTX) || defined(JOY_AXIS_RIGHTY)
 	switch (event.jaxis.axis) {
 #ifdef JOY_AXIS_LEFTX
-	case JOY_AXIS_LEFTX:
+	case JOY_AXIS_LEFTX: //0
 		leftStickXUnscaled = event.jaxis.value;
 		leftStickNeedsScaling = true;
 		return true;
 #endif
 #ifdef JOY_AXIS_LEFTY
-	case JOY_AXIS_LEFTY:
+	case JOY_AXIS_LEFTY: //1
 		leftStickYUnscaled = -event.jaxis.value;
 		leftStickNeedsScaling = true;
 		return true;
 #endif
 #ifdef JOY_AXIS_RIGHTX
-	case JOY_AXIS_RIGHTX:
+	case JOY_AXIS_RIGHTX: //0
 		rightStickXUnscaled = event.jaxis.value;
 		rightStickNeedsScaling = true;
 		return true;
 #endif
 #ifdef JOY_AXIS_RIGHTY
-	case JOY_AXIS_RIGHTY:
+	case JOY_AXIS_RIGHTY: //1
 		rightStickYUnscaled = -event.jaxis.value;
 		rightStickNeedsScaling = true;
 		return true;
