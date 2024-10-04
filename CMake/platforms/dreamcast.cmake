@@ -47,4 +47,3 @@ set(SDL_INCLUDE_DIR /usr/include/SDL/)
 set(SDL_LIBRARY /usr/lib/libSDL.a)
 
 set(FMT_USE_DOUBLE 0)
-target_compile_definitions(fmt PUBLIC FMT_USE_DOUBLE=0)
