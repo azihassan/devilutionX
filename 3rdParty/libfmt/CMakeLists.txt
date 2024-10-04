@@ -16,8 +16,8 @@ else()
 endif()
 include(FetchContent)
 FetchContent_Declare(libfmt
-  URL https://github.com/fmtlib/fmt/archive/refs/tags/10.2.1.tar.gz
-  URL_HASH MD5=dc09168c94f90ea890257995f2c497a5
+  URL https://github.com/fmtlib/fmt/archive/92227c77a4eed4c12f97f7916041ace4d5ca02d4.tar.gz
+  URL_HASH MD5=a60bc215a81a4ba770a7c1936311612f
 )
 FetchContent_MakeAvailableExcludeFromAll(libfmt)
 
@@ -26,3 +26,4 @@ if(DEVILUTIONX_WINDOWS_NO_WCHAR)
 endif()
 
 target_compile_definitions(fmt PUBLIC FMT_USE_FLOAT=0 FMT_USE_DOUBLE=0 FMT_USE_LONG_DOUBLE=0)
+target_compile_definitions(libfmt PUBLIC FMT_USE_FLOAT=0 FMT_USE_DOUBLE=0 FMT_USE_LONG_DOUBLE=0)
