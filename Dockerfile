@@ -25,7 +25,8 @@ RUN echo "Downloading fonts.mpq..."
 RUN curl -LO https://github.com/diasurgical/devilutionx-assets/releases/download/v4/fonts.mpq
 
 RUN echo "Configuring CMake..."
-RUN source /opt/toolchains/dc/kos/environ.sh && \
+RUN export KOS_SH4_PRECISION="-m4" && \
+    source /opt/toolchains/dc/kos/environ.sh && \
     #uncomment when using packed save files
     #without this, cmake can't find the kos-ports bzip2 & zlib libraries
     export CMAKE_PREFIX_PATH=/opt/toolchains/dc/kos-ports/libbz2/inst/:/opt/toolchains/dc/kos-ports/zlib/inst/ && \
@@ -35,7 +36,7 @@ RUN source /opt/toolchains/dc/kos/environ.sh && \
 # RUN patch build/_deps/libfmt-src/include/fmt/format.h -l -p0 < libfmt-long-double.patch
 
 RUN echo "Compiling..."
-RUN source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
+RUN export KOS_SH4_PRECISION="-m4" && source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
 
 RUN echo "Generating CDI"
 RUN source /opt/toolchains/dc/kos/environ.sh && \
