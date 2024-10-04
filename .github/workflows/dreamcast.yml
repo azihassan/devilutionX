@@ -58,7 +58,6 @@ jobs:
 
       - name: Configure CMake
         run: |
-          export KOS_SH4_PRECISION="-m4" && \
           source /opt/toolchains/dc/kos/environ.sh && \
           #uncomment when using packed mpq or save files
           #without this, cmake can't find the kos-ports bzip2 & zlib libraries
@@ -72,7 +71,6 @@ jobs:
         run: |
           # patches libfmt to support long double
           # patch build/_deps/libfmt-src/include/fmt/format.h -l -p0 < libfmt-long-double.patch
-          export KOS_SH4_PRECISION="-m4" && \
           source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
 
       - name: Generate .cdi
