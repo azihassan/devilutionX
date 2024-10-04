@@ -24,3 +24,5 @@ FetchContent_MakeAvailableExcludeFromAll(libfmt)
 if(DEVILUTIONX_WINDOWS_NO_WCHAR)
   target_compile_definitions(fmt PUBLIC FMT_WINDOWS_NO_WCHAR)
 endif()
+
+target_compile_definitions(fmt PUBLIC FMT_USE_DOUBLE=0)
