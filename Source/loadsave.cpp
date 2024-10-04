@@ -229,7 +229,7 @@ public:
 		//const auto encodedLen = m_cur_;
 		const auto encodedLen = codec_get_encoded_len(m_cur_);
 		const char *const password = pfile_get_password();
-		Log("codec_encode(m_buffer_.get(), {}, {}, \"{}\")", m_cur_, encodedLen, password);
+		Log("codec_encode(m_buffer_.get(), {}, {})", m_cur_, encodedLen);
 		codec_encode(m_buffer_.get(), m_cur_, encodedLen, password);
 		Log("~SaveHelper WriteFile(\"{}\", m_buffer_.get(), {})", m_szFileName_, encodedLen);
 		m_mpqWriter.WriteFile(m_szFileName_, m_buffer_.get(), encodedLen);
