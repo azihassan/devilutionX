@@ -226,7 +226,7 @@ public:
 
 	~SaveHelper()
 	{
-		//const auto encodedLen = m_cur_;
+		// const auto encodedLen = m_cur_;
 		const auto encodedLen = codec_get_encoded_len(m_cur_);
 		const char *const password = pfile_get_password();
 		Log("codec_encode(m_buffer_.get(), {}, {})", m_cur_, encodedLen);
@@ -2235,7 +2235,7 @@ size_t HotkeysSize(size_t nHotkeys = NumHotkeys)
 
 void LoadHotkeys()
 {
-	//hotkeys => htks to get around VMU filename size limits
+	// hotkeys => htks to get around VMU filename size limits
 	LoadHelper file(OpenSaveArchive(gSaveNumber), "htks");
 	if (!file.IsValid())
 		return;
@@ -2278,7 +2278,7 @@ void LoadHotkeys()
 
 void SaveHotkeys(SaveWriter &saveWriter, const Player &player)
 {
-	//hotkeys => htks to get around VMU filename size limits
+	// hotkeys => htks to get around VMU filename size limits
 	SaveHelper file(saveWriter, "htks", HotkeysSize());
 
 	// Write the number of spell hotkeys
@@ -2299,7 +2299,7 @@ void SaveHotkeys(SaveWriter &saveWriter, const Player &player)
 
 void LoadHeroItems(Player &player)
 {
-	//heroitems => hitms to get around VMU filename size limits
+	// heroitems => hitms to get around VMU filename size limits
 	LoadHelper file(OpenSaveArchive(gSaveNumber), "hitms");
 	if (!file.IsValid())
 		return;
@@ -2585,12 +2585,12 @@ void LoadGame(bool firstflag)
 	gbIsHellfireSaveGame = gbIsHellfire;
 }
 
-//todo restore saving of inventory body
+// todo restore saving of inventory body
 void SaveHeroItems(SaveWriter &saveWriter, Player &player)
 {
-	size_t itemCount = static_cast<size_t>(NUM_INVLOC) + InventoryGridCells + MaxBeltItems; //7 + 40 + 8 = 55
-	//heroitems => hitms to get around VMU filename size limits
-	SaveHelper file(saveWriter, "hitms", itemCount * (gbIsHellfire ? HellfireItemSaveSize : DiabloItemSaveSize) + sizeof(uint8_t)); //55 * 368 + 1 = 20241 bytes
+	size_t itemCount = static_cast<size_t>(NUM_INVLOC) + InventoryGridCells + MaxBeltItems; // 7 + 40 + 8 = 55
+	// heroitems => hitms to get around VMU filename size limits
+	SaveHelper file(saveWriter, "hitms", itemCount * (gbIsHellfire ? HellfireItemSaveSize : DiabloItemSaveSize) + sizeof(uint8_t)); // 55 * 368 + 1 = 20241 bytes
 
 	file.WriteLE<uint8_t>(gbIsHellfire ? 1 : 0);
 
