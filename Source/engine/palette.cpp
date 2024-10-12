@@ -170,15 +170,39 @@ void CycleColorsReverse(int from, int to)
 
 } // namespace
 
+#if defined(__DREAMCAST__) && defined(USE_SDL1)
+int SDLC_SetSurfaceAndPaletteColors(SDL_Surface *surface, SDL_Palette *palette, SDL_Color *colors, int firstcolor, int ncolors)
+{
+	if (ncolors > (palette->ncolors - firstcolor)) {
+		SDL_SetError("ncolors > (palette->ncolors - firstcolor)");
+		return -1;
+	}
+	if (colors != (palette->colors + firstcolor))
+		SDL_memcpy(palette->colors + firstcolor, colors, ncolors * sizeof(*colors));
+
+#if SDL1_VIDEO_MODE_BPP == 8
+	// When the video surface is 8bit, we need to set the output palette as well.
+	SDL_SetColors(SDL_GetVideoSurface(), colors, firstcolor, ncolors);
+#endif
+
+	// todo figure out why the SDL_SetPalette call crashes on dreamcast
+	Log("todo figure out why the SDL_SetPalette call crashes on dreamcast");
+	// return SDL_SetPalette(surface, SDL_LOGPAL, colors, firstcolor, ncolors) - 1;
+	return 0;
+}
+#endif
+
 void palette_update(int first, int ncolor)
 {
 	if (HeadlessMode)
 		return;
 
 	assert(Palette);
+	Log("before SDLC_SetSurfaceAndPaletteColors");
 	if (SDLC_SetSurfaceAndPaletteColors(PalSurface, Palette.get(), system_palette.data(), first, ncolor) < 0) {
 		ErrSdl();
 	}
+	Log("after SDLC_SetSurfaceAndPaletteColors");
 	pal_surface_palette_version++;
 }
 
