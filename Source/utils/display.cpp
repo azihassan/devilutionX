@@ -49,7 +49,7 @@
 void enable_dma_driver()
 {
 	SDL_DC_VerticalWait(SDL_FALSE);
-	SDL_DC_ShowAskHz(SDL_FALSE);
+	SDL_DC_ShowAskHz(SDL_TRUE);
 	SDL_DC_EmulateKeyboard(SDL_FALSE);
 	SDL_DC_EmulateMouse(SDL_FALSE);
 	SDL_DC_SetVideoDriver(SDL_DC_DMA_VIDEO);
@@ -242,6 +242,9 @@ float GetDpiScalingFactor()
 void SetVideoMode(int width, int height, int bpp, uint32_t flags)
 {
 	Log("Setting video mode {}x{} bpp={} flags=0x{:08X}", width, height, bpp, flags);
+#ifdef __DREAMCAST__
+	enable_dma_driver();
+#endif
 	ghMainWnd = SDL_SetVideoMode(width, height, bpp, flags);
 	if (ghMainWnd == nullptr) {
 		ErrSdl();
@@ -320,9 +323,6 @@ bool SpawnWindow(const char *lpWindowName)
 	initFlags |= SDL_INIT_GAMECONTROLLER;
 
 	SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
-#endif
-#ifdef __DREAMCAST__
-	enable_dma_driver();
 #endif
 	if (SDL_Init(initFlags) <= -1) {
 		ErrSdl();
@@ -478,6 +478,9 @@ void SetFullscreenMode()
 	if (*sgOptions.Graphics.fullscreen) {
 		flags |= SDL_FULLSCREEN;
 	}
+#ifdef __DREAMCAST__
+	enable_dma_driver();
+#endif
 	ghMainWnd = SDL_SetVideoMode(0, 0, 0, flags);
 	if (ghMainWnd == NULL) {
 		ErrSdl();
