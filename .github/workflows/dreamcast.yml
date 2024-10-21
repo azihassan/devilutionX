@@ -43,8 +43,8 @@ jobs:
 
       - name: Download and unpack spawn.mpq
         run: |
-          curl -LO https://github.com/diasurgical/devilutionx-assets/releases/download/v4/spawn.mpq
-          #curl -LO https://raw.githubusercontent.com/d07RiV/diabloweb/3a5a51e84d5dab3cfd4fef661c46977b091aaa9c/spawn.mpq
+          #curl -LO https://github.com/diasurgical/devilutionx-assets/releases/download/v4/spawn.mpq
+          curl -LO https://raw.githubusercontent.com/d07RiV/diabloweb/3a5a51e84d5dab3cfd4fef661c46977b091aaa9c/spawn.mpq
           unpack_and_minify_mpq spawn.mpq --output-dir data
           rm spawn.mpq
 
