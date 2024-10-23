@@ -6,6 +6,7 @@ on:  # yamllint disable-line rule:truthy
     branches:
       - master
       - dreamcast
+      - fix/ISSUE-14-palette-crash-2
     paths-ignore:
       - '*.md'
       - 'docs/**'
