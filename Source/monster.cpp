@@ -54,6 +54,9 @@
 #ifdef _DEBUG
 #include "debug.h"
 #endif
+#ifdef __DREAMCAST__
+#include "memory_stats.h"
+#endif
 
 namespace devilution {
 
@@ -1441,6 +1444,14 @@ void ShrinkLeaderPacksize(const Monster &monster)
 
 void MonsterDeath(Monster &monster)
 {
+#ifdef __DREAMCAST__
+	// knights only have south death animation in the dreamcast port
+	// the death animations are similar because they show the knight rotate into the ground
+	// so I removed the other ones for less RAM usage (1018 kB down to 171 kB)
+	if (monster.type().type == MT_NBLACK || monster.type().type == MT_RTBLACK || monster.type().type == MT_BTBLACK || monster.type().type == MT_RBLACK) {
+		monster.direction = Direction::South;
+	}
+#endif
 	monster.var1++;
 	if (monster.type().type == MT_DIABLO) {
 		if (monster.position.tile.x < ViewPosition.x) {
@@ -3449,6 +3460,15 @@ void InitMonsterGFX(CMonster &monsterType, MonsterSpritesData &&spritesData)
 		GetMissileSpriteData(MissileGraphicID::DiabloApocalypseBoom).LoadGFX();
 }
 
+#ifdef __DREAMCAST__
+void print_memory_usage()
+{
+	set_system_ram();
+	print_ram_stats();
+	Log("\n\n\n");
+}
+#endif
+
 void InitAllMonsterGFX()
 {
 	if (HeadlessMode)
@@ -3467,6 +3487,10 @@ void InitAllMonsterGFX()
 		CMonster &firstMonster = LevelMonsterTypes[monsterTypes[0]];
 		if (firstMonster.animData != nullptr)
 			continue;
+#ifdef __DREAMCAST__
+		LogVerbose("Loading monster graphics: {:15s} x{:d}", firstMonster.data().spritePath(), monsterTypes.size());
+		print_memory_usage();
+#endif
 		MonsterSpritesData spritesData = LoadMonsterSpritesData(firstMonster.data());
 		const size_t spritesDataSize = spritesData.offsets[GetNumAnimsWithGraphics(firstMonster.data())];
 		for (size_t i = 1; i < monsterTypes.size(); ++i) {
@@ -3475,6 +3499,9 @@ void InitAllMonsterGFX()
 			InitMonsterGFX(LevelMonsterTypes[monsterTypes[i]], std::move(spritesDataCopy));
 		}
 		LogVerbose("Loaded monster graphics: {:15s} {:>4d} KiB   x{:d}", firstMonster.data().spritePath(), spritesDataSize / 1024, monsterTypes.size());
+#ifdef __DREAMCAST__
+		print_memory_usage();
+#endif
 		totalUniqueBytes += spritesDataSize;
 		totalBytes += spritesDataSize * monsterTypes.size();
 		InitMonsterGFX(firstMonster, std::move(spritesData));
@@ -3795,6 +3822,15 @@ void MonsterDeath(Monster &monster, Direction md, bool sendmsg)
 	if (monster.mode != MonsterMode::Petrified) {
 		if (monster.type().type == MT_GOLEM)
 			md = Direction::South;
+#ifdef __DREAMCAST__
+		// knights only have south death animation in the dreamcast port
+		// the death animations are similar because they show the knight rotate into the ground
+		// so I removed the other ones for less RAM usage (1018 kB down to 171 kB)
+		if (monster.type().type == MT_NBLACK || monster.type().type == MT_RTBLACK || monster.type().type == MT_BTBLACK || monster.type().type == MT_RBLACK) {
+			md = Direction::South;
+			monster.direction = Direction::South;
+		}
+#endif
 		NewMonsterAnim(monster, MonsterGraphic::Death, md, gGameLogicStep < GameLogicStep::ProcessMonsters ? AnimationDistributionFlags::ProcessAnimationPending : AnimationDistributionFlags::None);
 		monster.mode = MonsterMode::Death;
 	} else if (monster.isUnique()) {
