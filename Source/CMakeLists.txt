@@ -3,7 +3,6 @@ include(functions/devilutionx_library)
 include(functions/genex)
 
 set(libdevilutionx_SRCS
-  memory_stats.cpp
   appfat.cpp
   automap.cpp
   capture.cpp
@@ -281,6 +280,9 @@ if(DEVILUTIONX_SCREENSHOT_FORMAT STREQUAL DEVILUTIONX_SCREENSHOT_FORMAT_PNG)
   list(APPEND libdevilutionx_SRCS
     utils/surface_to_png.cpp
   )
+endif()
+if(PLATFORM_DREAMCAST)
+  list(APPEND libdevilutionx_SRCS memory_stats.cpp)
 endif()
 
 add_devilutionx_library(libdevilutionx OBJECT ${libdevilutionx_SRCS})

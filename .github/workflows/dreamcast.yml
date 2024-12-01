@@ -84,14 +84,16 @@ jobs:
         run: |
           source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
 
+      # diabdat.mpq isn't available so this doesn't do anything, but I'll leave it here for documentation purposes
       - name: Patch RAM-heavy assets
+        if: ${{ hashFiles('DIABDAT.MPQ') != '' }}
         run: |
-          [ -e build/data/diabdat ] && \
-          cp build/data/diabdat/monsters/snake/snakbl.trn build/data/diabdat/monsters/snake/snakb.trn && \
-          cp blackd.clx build/data/diabdat/monsters/black/blackd.clx && \
-          cp diablod.clx build/data/diabdat/monsters/diablo/diablod.clx && \
-          cp diablon.clx build/data/diabdat/monsters/diablo/diablon.clx && \
-          patch build/data/txt/monsters/monstdat.tsv -l -p0 < monstdat.patch
+          unpack_and_minify_mpq DIABDAT.MPQ && \
+          cp diabdat/monsters/snake/snakbl.trn diabdat/monsters/snake/snakb.trn && \
+          cp blackd.clx diabdat/monsters/black/blackd.clx && \
+          cp diablod.clx diabdat/monsters/diablo/diablod.clx && \
+          cp diablon.clx diabdat/monsters/diablo/diablon.clx && \
+          patch build/data/txtdata/monsters/monstdat.tsv -l -p0 < monstdat.patch
 
       - name: Generate .cdi
         run: |
