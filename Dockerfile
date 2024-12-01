@@ -52,12 +52,12 @@ RUN echo "Compiling..."
 RUN source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
 
 RUN echo "Patching RAM-heavy assets..."
-RUN [ -e build/data/diabdat ] && \
-    cp build/data/diabdat/monsters/snake/snakbl.trn build/data/diabdat/monsters/snake/snakb.trn && \
-    cp blackd.clx build/data/diabdat/monsters/black/blackd.clx && \
-    cp diablod.clx build/data/diabdat/monsters/diablo/diablod.clx && \
-    cp diablon.clx build/data/diabdat/monsters/diablo/diablon.clx && \
-    patch build/data/txt/monsters/monstdat.tsv -l -p0 < monstdat.patch
+RUN [ -e diabdat ] && \
+    cp diabdat/monsters/snake/snakbl.trn diabdat/monsters/snake/snakb.trn && \
+    cp blackd.clx diabdat/monsters/black/blackd.clx && \
+    cp diablod.clx diabdat/monsters/diablo/diablod.clx && \
+    cp diablon.clx diabdat/monsters/diablo/diablon.clx && \
+    patch build/data/txtdata/monsters/monstdat.tsv -l -p0 < monstdat.patch
 
 RUN echo "Generating CDI"
 RUN source /opt/toolchains/dc/kos/environ.sh && \
