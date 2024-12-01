@@ -3,6 +3,7 @@ include(functions/devilutionx_library)
 include(functions/genex)
 
 set(libdevilutionx_SRCS
+  memory_stats.cpp
   appfat.cpp
   automap.cpp
   capture.cpp
