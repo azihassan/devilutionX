@@ -118,6 +118,21 @@ size_t GetNumAnimsWithGraphics(const MonsterData &monsterData)
 	return result;
 }
 
+#ifdef __DREAMCAST__
+void ReorientMonsterToSouth(Monster &monster)
+{
+	// knights and mages only have the south facing death animation in the dreamcast port
+	// the death animations are similar because they show the monster rotate into the ground
+	// so I removed the other directions for less RAM usage
+	// 1018 kB down to 140 kB for the knights and
+	// 311 kB down to 40 kB for the mages
+	bool hasSouthDeathAnimationOnly = monster.type().type == MT_NBLACK || monster.type().type == MT_RTBLACK || monster.type().type == MT_BTBLACK || monster.type().type == MT_RBLACK || monster.type().type == MT_COUNSLR || monster.type().type == MT_MAGISTR || monster.type().type == MT_CABALIST || monster.type().type == MT_ADVOCATE;
+	if (hasSouthDeathAnimationOnly) {
+		monster.direction = Direction::South;
+	}
+}
+#endif
+
 void InitMonsterTRN(CMonster &monst)
 {
 	char path[64];
@@ -1445,12 +1460,7 @@ void ShrinkLeaderPacksize(const Monster &monster)
 void MonsterDeath(Monster &monster)
 {
 #ifdef __DREAMCAST__
-	// knights only have south death animation in the dreamcast port
-	// the death animations are similar because they show the knight rotate into the ground
-	// so I removed the other ones for less RAM usage (1018 kB down to 171 kB)
-	if (monster.type().type == MT_NBLACK || monster.type().type == MT_RTBLACK || monster.type().type == MT_BTBLACK || monster.type().type == MT_RBLACK) {
-		monster.direction = Direction::South;
-	}
+	ReorientMonsterToSouth(monster);
 #endif
 	monster.var1++;
 	if (monster.type().type == MT_DIABLO) {
@@ -3823,13 +3833,8 @@ void MonsterDeath(Monster &monster, Direction md, bool sendmsg)
 		if (monster.type().type == MT_GOLEM)
 			md = Direction::South;
 #ifdef __DREAMCAST__
-		// knights only have south death animation in the dreamcast port
-		// the death animations are similar because they show the knight rotate into the ground
-		// so I removed the other ones for less RAM usage (1018 kB down to 171 kB)
-		if (monster.type().type == MT_NBLACK || monster.type().type == MT_RTBLACK || monster.type().type == MT_BTBLACK || monster.type().type == MT_RBLACK) {
-			md = Direction::South;
-			monster.direction = Direction::South;
-		}
+		md = Direction::South;
+		ReorientMonsterToSouth(monster);
 #endif
 		NewMonsterAnim(monster, MonsterGraphic::Death, md, gGameLogicStep < GameLogicStep::ProcessMonsters ? AnimationDistributionFlags::ProcessAnimationPending : AnimationDistributionFlags::None);
 		monster.mode = MonsterMode::Death;
