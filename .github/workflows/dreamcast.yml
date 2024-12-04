@@ -89,7 +89,6 @@ jobs:
         if: ${{ hashFiles('DIABDAT.MPQ') != '' }}
         run: |
           unpack_and_minify_mpq DIABDAT.MPQ && \
-          cp diabdat/monsters/snake/snakbl.trn diabdat/monsters/snake/snakb.trn && \
           cp blackd.clx diabdat/monsters/black/blackd.clx && \
           cp diablod.clx diabdat/monsters/diablo/diablod.clx && \
           cp diablon.clx diabdat/monsters/diablo/diablon.clx && \
