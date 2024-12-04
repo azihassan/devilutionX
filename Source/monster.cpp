@@ -3473,7 +3473,6 @@ void InitMonsterGFX(CMonster &monsterType, MonsterSpritesData &&spritesData)
 #ifdef __DREAMCAST__
 void print_memory_usage()
 {
-	set_system_ram();
 	print_ram_stats();
 	Log("\n\n\n");
 }
@@ -3498,7 +3497,7 @@ void InitAllMonsterGFX()
 		if (firstMonster.animData != nullptr)
 			continue;
 #ifdef __DREAMCAST__
-		LogVerbose("Loading monster graphics: {:15s} x{:d}", firstMonster.data().spritePath(), monsterTypes.size());
+		Log("Loading monster graphics: {:15s} x{:d}", firstMonster.data().spritePath(), monsterTypes.size());
 		print_memory_usage();
 #endif
 		MonsterSpritesData spritesData = LoadMonsterSpritesData(firstMonster.data());
