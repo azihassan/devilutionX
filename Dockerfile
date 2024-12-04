@@ -53,7 +53,6 @@ RUN source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
 
 RUN echo "Patching RAM-heavy assets..."
 RUN [ -e diabdat ] && \
-    cp diabdat/monsters/snake/snakbl.trn diabdat/monsters/snake/snakb.trn && \
     cp blackd.clx diabdat/monsters/black/blackd.clx && \
     cp diablod.clx diabdat/monsters/diablo/diablod.clx && \
     cp diablon.clx diabdat/monsters/diablo/diablon.clx && \
