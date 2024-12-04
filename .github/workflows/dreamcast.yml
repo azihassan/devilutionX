@@ -1,7 +1,7 @@
 ---
 name: Sega Dreamcast
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   push:
     branches:
       - master
@@ -83,6 +83,17 @@ jobs:
       - name: Build DevilutionX
         run: |
           source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
+
+      # diabdat.mpq isn't available so this doesn't do anything, but I'll leave it here for documentation purposes
+      - name: Patch RAM-heavy assets
+        if: ${{ hashFiles('DIABDAT.MPQ') != '' }}
+        run: |
+          unpack_and_minify_mpq DIABDAT.MPQ && \
+          cp blackd.clx diabdat/monsters/black/blackd.clx && \
+          cp diablod.clx diabdat/monsters/diablo/diablod.clx && \
+          cp diablon.clx diabdat/monsters/diablo/diablon.clx && \
+          cp maged.clx diabdat/monsters/mage/maged.clx && \
+          patch build/data/txtdata/monsters/monstdat.tsv -l -p0 < monstdat.patch
 
       - name: Generate .cdi
         run: |

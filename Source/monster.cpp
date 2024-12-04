@@ -54,6 +54,9 @@
 #ifdef _DEBUG
 #include "debug.h"
 #endif
+#ifdef __DREAMCAST__
+#include "memory_stats.h"
+#endif
 
 namespace devilution {
 
@@ -114,6 +117,21 @@ size_t GetNumAnimsWithGraphics(const MonsterData &monsterData)
 	}
 	return result;
 }
+
+#ifdef __DREAMCAST__
+void ReorientMonsterToSouth(Monster &monster)
+{
+	// knights and mages only have the south facing death animation in the dreamcast port
+	// the death animations are similar because they show the monster rotate into the ground
+	// so I removed the other directions for less RAM usage
+	// 1018 kB down to 140 kB for the knights and
+	// 311 kB down to 40 kB for the mages
+	bool hasSouthDeathAnimationOnly = monster.type().type == MT_NBLACK || monster.type().type == MT_RTBLACK || monster.type().type == MT_BTBLACK || monster.type().type == MT_RBLACK || monster.type().type == MT_COUNSLR || monster.type().type == MT_MAGISTR || monster.type().type == MT_CABALIST || monster.type().type == MT_ADVOCATE;
+	if (hasSouthDeathAnimationOnly) {
+		monster.direction = Direction::South;
+	}
+}
+#endif
 
 void InitMonsterTRN(CMonster &monst)
 {
@@ -1441,6 +1459,9 @@ void ShrinkLeaderPacksize(const Monster &monster)
 
 void MonsterDeath(Monster &monster)
 {
+#ifdef __DREAMCAST__
+	ReorientMonsterToSouth(monster);
+#endif
 	monster.var1++;
 	if (monster.type().type == MT_DIABLO) {
 		if (monster.position.tile.x < ViewPosition.x) {
@@ -3449,6 +3470,14 @@ void InitMonsterGFX(CMonster &monsterType, MonsterSpritesData &&spritesData)
 		GetMissileSpriteData(MissileGraphicID::DiabloApocalypseBoom).LoadGFX();
 }
 
+#ifdef __DREAMCAST__
+void print_memory_usage()
+{
+	print_ram_stats();
+	Log("\n\n\n");
+}
+#endif
+
 void InitAllMonsterGFX()
 {
 	if (HeadlessMode)
@@ -3467,6 +3496,10 @@ void InitAllMonsterGFX()
 		CMonster &firstMonster = LevelMonsterTypes[monsterTypes[0]];
 		if (firstMonster.animData != nullptr)
 			continue;
+#ifdef __DREAMCAST__
+		Log("Loading monster graphics: {:15s} x{:d}", firstMonster.data().spritePath(), monsterTypes.size());
+		print_memory_usage();
+#endif
 		MonsterSpritesData spritesData = LoadMonsterSpritesData(firstMonster.data());
 		const size_t spritesDataSize = spritesData.offsets[GetNumAnimsWithGraphics(firstMonster.data())];
 		for (size_t i = 1; i < monsterTypes.size(); ++i) {
@@ -3475,6 +3508,9 @@ void InitAllMonsterGFX()
 			InitMonsterGFX(LevelMonsterTypes[monsterTypes[i]], std::move(spritesDataCopy));
 		}
 		LogVerbose("Loaded monster graphics: {:15s} {:>4d} KiB   x{:d}", firstMonster.data().spritePath(), spritesDataSize / 1024, monsterTypes.size());
+#ifdef __DREAMCAST__
+		print_memory_usage();
+#endif
 		totalUniqueBytes += spritesDataSize;
 		totalBytes += spritesDataSize * monsterTypes.size();
 		InitMonsterGFX(firstMonster, std::move(spritesData));
@@ -3795,6 +3831,10 @@ void MonsterDeath(Monster &monster, Direction md, bool sendmsg)
 	if (monster.mode != MonsterMode::Petrified) {
 		if (monster.type().type == MT_GOLEM)
 			md = Direction::South;
+#ifdef __DREAMCAST__
+		md = Direction::South;
+		ReorientMonsterToSouth(monster);
+#endif
 		NewMonsterAnim(monster, MonsterGraphic::Death, md, gGameLogicStep < GameLogicStep::ProcessMonsters ? AnimationDistributionFlags::ProcessAnimationPending : AnimationDistributionFlags::None);
 		monster.mode = MonsterMode::Death;
 	} else if (monster.isUnique()) {

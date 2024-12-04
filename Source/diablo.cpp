@@ -105,6 +105,9 @@
 #ifdef GPERF_HEAP_FIRST_GAME_ITERATION
 #include <gperftools/heap-profiler.h>
 #endif
+#ifdef __DREAMCAST__
+#include "memory_stats.h"
+#endif
 
 namespace devilution {
 
@@ -2546,6 +2549,9 @@ int DiabloMain(int argc, char **argv)
 #ifdef _DEBUG
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_DEBUG);
 #endif
+#ifdef __DREAMCAST__
+	set_system_ram();
+#endif
 
 	DiabloParseFlags(argc, argv);
 	InitKeymapActions();
@@ -3249,6 +3255,10 @@ void LoadGameLevel(bool firstflag, lvl_entry lvldir)
 	CompleteProgress();
 
 	LoadGameLevelCalculateCursor();
+#ifdef __DREAMCAST__
+	Log("Level loaded");
+	print_ram_stats();
+#endif
 }
 
 bool game_loop(bool bStartup)
