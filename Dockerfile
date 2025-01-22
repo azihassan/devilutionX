@@ -54,8 +54,6 @@ RUN source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
 RUN echo "Patching RAM-heavy assets..."
 RUN [ -e diabdat ] && \
     cp blackd.clx diabdat/monsters/black/blackd.clx && \
-    cp diablod.clx diabdat/monsters/diablo/diablod.clx && \
-    cp diablon.clx diabdat/monsters/diablo/diablon.clx && \
     cp maged.clx diabdat/monsters/mage/maged.clx && \
     patch build/data/txtdata/monsters/monstdat.tsv -l -p0 < monstdat.patch
 
