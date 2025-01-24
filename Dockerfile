@@ -53,9 +53,12 @@ RUN source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
 
 RUN echo "Patching RAM-heavy assets..."
 RUN [ -e diabdat ] && \
-    cp blackd.clx diabdat/monsters/black/blackd.clx && \
-    cp maged.clx diabdat/monsters/mage/maged.clx && \
-    patch build/data/txtdata/monsters/monstdat.tsv -l -p0 < monstdat.patch
+    curl -LO https://gist.github.com/azihassan/85a7bb8c49ff23fe4d8cf7cb9fdfc8c4/raw/d88f732c2dc44f9ee9f3d56dd942ff0b0b849811/clx.cpp && \
+    g++ -std=c++11 clx.cpp && \
+    ./a.out diabdat/monsters/black/blackd.clx && \
+    ./a.out diabdat/monsters/mage/maged.clx && \
+    mv diabdat/monsters/black/blackd.clx.stripped diabdat/monsters/black/blackd.clx && \
+    mv diabdat/monsters/mage/maged.clx.stripped diabdat/monsters/mage/maged.clx
 
 RUN echo "Generating CDI"
 RUN source /opt/toolchains/dc/kos/environ.sh && \
