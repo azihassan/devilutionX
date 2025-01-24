@@ -9,7 +9,7 @@ RUN git clone https://github.com/diasurgical/devilutionx-mpq-tools/ && \
 
 RUN echo "Cloning project..."
 WORKDIR /opt/toolchains/dc/kos/
-RUN git clone -b dreamcast https://github.com/azihassan/devilutionX.git
+RUN git clone -b fix/ISSUE-7-ram-limitations https://github.com/azihassan/devilutionX.git
 
 RUN echo "Uninstall kos-ports SDL 1.2..."
 RUN source /opt/toolchains/dc/kos/environ.sh && \
@@ -25,20 +25,21 @@ RUN git clone -b SDL-dreamhal--GLDC https://github.com/GPF/SDL-1.2 && \
     cp include/* /usr/include/SDL/
 
 WORKDIR /opt/toolchains/dc/kos/devilutionX
-RUN echo "Downloading and unpacking spawn.mpq..."
-RUN curl -LO https://raw.githubusercontent.com/d07RiV/diabloweb/3a5a51e84d5dab3cfd4fef661c46977b091aaa9c/spawn.mpq && \
-    unpack_and_minify_mpq spawn.mpq && \
-    rm spawn.mpq
-
 RUN echo "Downloading and unpacking fonts.mpq..."
 RUN curl -LO https://github.com/diasurgical/devilutionx-assets/releases/download/v4/fonts.mpq && \
     unpack_and_minify_mpq fonts.mpq && \
     rm fonts.mpq
 
-#WORKDIR /opt/toolchains/dc/kos/devilutionX
-#RUN echo "Copying and unpacking diabdat.mpq..."
-#COPY DIABDAT.MPQ .
-#RUN unpack_and_minify_mpq DIABDAT.MPQ
+#spawn version
+#RUN echo "Downloading and unpacking spawn.mpq..."
+#RUN curl -LO https://raw.githubusercontent.com/d07RiV/diabloweb/3a5a51e84d5dab3cfd4fef661c46977b091aaa9c/spawn.mpq && \
+#    unpack_and_minify_mpq spawn.mpq && \
+#    rm spawn.mpq
+
+#full version
+RUN echo "Copying and unpacking diabdat.mpq..."
+COPY DIABDAT.MPQ .
+RUN unpack_and_minify_mpq DIABDAT.MPQ
 
 RUN echo "Configuring CMake..."
 RUN source /opt/toolchains/dc/kos/environ.sh && \
@@ -50,11 +51,20 @@ RUN source /opt/toolchains/dc/kos/environ.sh && \
 RUN echo "Compiling..."
 RUN source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
 
+RUN echo "Patching RAM-heavy assets..."
+RUN [ -e diabdat ] && \
+    curl -LO https://gist.github.com/azihassan/85a7bb8c49ff23fe4d8cf7cb9fdfc8c4/raw/d88f732c2dc44f9ee9f3d56dd942ff0b0b849811/clx.cpp && \
+    g++ -std=c++11 clx.cpp && \
+    ./a.out diabdat/monsters/black/blackd.clx && \
+    ./a.out diabdat/monsters/mage/maged.clx && \
+    mv diabdat/monsters/black/blackd.clx.stripped diabdat/monsters/black/blackd.clx && \
+    mv diabdat/monsters/mage/maged.clx.stripped diabdat/monsters/mage/maged.clx
+
 RUN echo "Generating CDI"
 RUN source /opt/toolchains/dc/kos/environ.sh && \
-    mv spawn build/data/spawn && \
+    #mv spawn build/data/spawn && \
     mv fonts/fonts/ build/data/fonts/ && \
-    #mv diabdat build/data/diabdat && \
+    mv diabdat build/data/diabdat && \
     mkdcdisc -e build/devilutionx.elf -o build/devilutionx.cdi --name 'Diablo 1' -d build/data/
 
 ENTRYPOINT ["sh", "-c", "source /opt/toolchains/dc/kos/environ.sh && \"$@\"", "-s"]

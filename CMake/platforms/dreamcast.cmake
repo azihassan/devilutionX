@@ -21,7 +21,7 @@ set(DEVILUTIONX_DISABLE_STRIP ON)
 set(DEVILUTIONX_ASSETS_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/data/")
 set(BUILD_ASSETS_MPQ OFF)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/threads-stub")
+#list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/threads-stub")
 list(APPEND DEVILUTIONX_PLATFORM_COMPILE_DEFINITIONS __DREAMCAST__)
 add_compile_options(-fpermissive)
 
@@ -47,4 +47,4 @@ set(JOY_BUTTON_START 3)
 set(SDL_INCLUDE_DIR /usr/include/SDL/)
 set(SDL_LIBRARY /usr/lib/libSDL.a)
 
-add_compile_options(-flto=none)
+#add_compile_options(-flto=none)
