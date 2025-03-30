@@ -261,8 +261,16 @@ void effects_cleanup_sfx()
 
 void sound_init()
 {
+#ifdef __DREAMCAST__
+	bool isDreamcast = true;
+#else
+	bool isDreamcast = false;
+#endif
 	uint8_t mask = sfx_MISC;
-	if (gbIsMultiplayer) {
+	// only load the SFX of the current character on the dreamcast
+	// because it still doesn't have network multiplayer mode
+	// so we only need the sfx of the player's class
+	if (gbIsMultiplayer && !isDreamcast) {
 		mask |= sfx_WARRIOR;
 		if (!gbIsSpawn)
 			mask |= (sfx_ROGUE | sfx_SORCERER);

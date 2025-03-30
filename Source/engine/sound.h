@@ -13,6 +13,10 @@
 #include "utils/attributes.h"
 
 #ifndef NOSOUND
+#ifdef __DREAMCAST__
+#include "memory_stats.h"
+#endif
+
 #include "utils/soundsample.h"
 #endif
 

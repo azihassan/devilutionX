@@ -24,6 +24,11 @@
 #include "utils/str_cat.hpp"
 #include "utils/stubs.h"
 
+// todo remove this
+// changing this value in dreamcast.cmake causes the whole project to recompile
+// redefined here to only recompile sound.cpp
+#define STREAM_ALL_AUDIO_MIN_FILE_SIZE 10 * 1024
+
 namespace devilution {
 
 bool gbSndInited;
@@ -71,6 +76,11 @@ bool LoadAudioFile(const char *path, bool stream, bool errorDialog, SoundSample 
 #endif
 #endif
 
+#ifdef __DREAMCAST__
+	Log(">AUDIO: Loading audio file {} with streaming {} ({} kilobytes)", foundPath, stream, ref.size() / 1024.0);
+	print_ram_stats();
+	Log("\n\n\n");
+#endif
 	if (stream) {
 		if (result.SetChunkStream(foundPath, isMp3, /*logErrors=*/true) != 0) {
 			if (errorDialog) {
@@ -95,6 +105,7 @@ bool LoadAudioFile(const char *path, bool stream, bool errorDialog, SoundSample 
 			return false;
 		}
 		const int error = result.SetChunk(waveFile, size, isMp3);
+
 		if (error != 0) {
 			if (errorDialog)
 				ErrSdl();
