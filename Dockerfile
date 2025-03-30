@@ -1,4 +1,4 @@
-FROM azihassan/kallistios:fdffe33635239d46bcccf0d5c4d59bb7d2d91f38
+FROM azihassan/kallistios:8c7fbfcf3c38c4da82bc067e1719b74c2f93f755
 
 RUN echo "Building unpack_and_minify_mpq..."
 RUN git clone https://github.com/diasurgical/devilutionx-mpq-tools/ && \

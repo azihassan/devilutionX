@@ -25,7 +25,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: azihassan/kallistios:docker
+    container: azihassan/kallistios:8c7fbfcf3c38c4da82bc067e1719b74c2f93f755
     steps:
       - name: Checkout
         uses: actions/checkout@v4
