@@ -215,6 +215,9 @@ TSnd::~TSnd()
 
 void snd_init()
 {
+#ifdef __DREAMCAST__
+	::snd_init();
+#endif
 	sgOptions.Audio.soundVolume.SetValue(CapVolume(*sgOptions.Audio.soundVolume));
 	gbSoundOn = *sgOptions.Audio.soundVolume > VOLUME_MIN;
 	sgbSaveSoundOn = gbSoundOn;
@@ -239,6 +242,7 @@ void snd_init()
 void snd_deinit()
 {
 	if (gbSndInited) {
+		snd_shutdown();
 		Aulib::quit();
 		duplicateSoundsMutex = std::nullopt;
 	}

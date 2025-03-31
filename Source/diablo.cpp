@@ -106,6 +106,10 @@
 #include <gperftools/heap-profiler.h>
 #endif
 
+#ifdef __DREAMCAST__
+#include "memory_stats.h"
+#endif
+
 namespace devilution {
 
 uint32_t DungeonSeeds[NUMLEVELS];
@@ -2543,6 +2547,9 @@ void setOnInitialized(void (*callback)())
 
 int DiabloMain(int argc, char **argv)
 {
+#ifdef __DREAMCAST__
+	set_system_ram();
+#endif
 #ifdef _DEBUG
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_DEBUG);
 #endif
