@@ -281,6 +281,9 @@ if(DEVILUTIONX_SCREENSHOT_FORMAT STREQUAL DEVILUTIONX_SCREENSHOT_FORMAT_PNG)
     utils/surface_to_png.cpp
   )
 endif()
+if(PLATFORM_DREAMCAST)
+  list(APPEND libdevilutionx_SRCS memory_stats.cpp)
+endif()
 
 add_devilutionx_library(libdevilutionx OBJECT ${libdevilutionx_SRCS})
 target_include_directories(libdevilutionx PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
