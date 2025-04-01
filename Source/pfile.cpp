@@ -36,6 +36,30 @@
 #include <dc/vmu_pkg.h>
 #include <kos/fs.h>
 #include <libgen.h>
+
+// Add array of possible VMU paths to try
+const char* vmuPaths[] = {
+    "/vmu/A1",
+    "/vmu/a1",
+    "/vmu/A2",
+    "/vmu/a2",
+    "/vmu/B1",
+    "/vmu/b1",
+    // Additional paths for Flycast compatibility
+    "/flycast/vmu/vm01.bin",
+    "/flycast/vmu/vm02.bin",
+    "/flycast/vmu/vma1.bin",
+    "/flycast/vmu/vma2.bin",
+    "/tmp/vmu/A1",
+    "/tmp/vmu/a1",
+    "/fs/vmu/A1",
+    "/fs/vmu/a1",
+    "/fs/sd/vmu/A1",
+    "/fs/sd/vmu/a1"
+};
+const int numVmuPaths = sizeof(vmuPaths) / sizeof(vmuPaths[0]);
+// Current working VMU path index - will be set when one is found working
+int workingVmuPath = -1;
 #endif
 
 #ifdef UNPACKED_SAVES
@@ -581,44 +605,100 @@ std::unique_ptr<std::byte[]> SaveReader::ReadFile(const char *filename, std::siz
 {
 	Log("SaveReader::ReadFile(\"{}\", fileSize, error)", filename);
 	error = 0;
-	const std::string path = dir_ + filename;
-	Log("path = \"{}\"", path);
-	size_t size = 0;
-	uint8 *contents;
-	if (fs_load(path.c_str(), &contents) == -1) {
-		error = 1;
-		LogError("fs_load(\"{}\", &contents) = -1", path);
-		app_fatal("SaveReader::ReadFile " + path + " KO");
-		return nullptr;
-	}
-	vmu_pkg_t package;
-	if (vmu_pkg_parse(contents, &package) < 0) {
-		error = 1;
+	
+	// If we already know a working path, use it
+	if (workingVmuPath >= 0) {
+		// Use the path that worked before
+		std::string basePath = vmuPaths[workingVmuPath];
+		std::string finalDir = basePath + dir_.substr(dir_.find_last_of('/'));
+		const std::string path = finalDir + filename;
+		Log("Using known working VMU path = \"{}\"", path);
+		
+		size_t size = 0;
+		uint8 *contents;
+		if (fs_load(path.c_str(), &contents) == -1) {
+			error = 1;
+			LogError("fs_load(\"{}\", &contents) = -1", path);
+			return nullptr;
+		}
+
+		vmu_pkg_t package;
+		if (vmu_pkg_parse(contents, &package) < 0) {
+			error = 1;
+			free(contents);
+			LogError("vmu_pkg_parse = -1");
+			return nullptr;
+		}
+		
+		Log("Parsed package {} ({})", package.desc_short, package.desc_long);
+		fileSize = package.data_len;
+		std::unique_ptr<std::byte[]> result;
+		result.reset(new std::byte[fileSize]);
+		memcpy(result.get(), package.data, fileSize);
 		free(contents);
-		LogError("vmu_pkg_parse = -1");
-		app_fatal("vmu_pkg_parse failed");
-		return nullptr;
+		return result;
 	}
-	Log("Parsed package {} ({})", package.desc_short, package.desc_long);
-	fileSize = package.data_len;
-	std::unique_ptr<std::byte[]> result;
-	result.reset(new std::byte[fileSize]);
-	memcpy(result.get(), package.data, fileSize);
-	// free(package.data);
-	free(contents);
-	return result;
+	
+	// Try all possible VMU paths until one works
+	for (int i = 0; i < numVmuPaths; i++) {
+		std::string basePath = vmuPaths[i];
+		std::string finalDir = basePath;
+		// Extract the save directory from the original path (after the /vmu/XX/)
+		if (dir_.find('/') != std::string::npos) {
+			finalDir += dir_.substr(dir_.find_last_of('/'));
+		}
+		const std::string path = finalDir + filename;
+		Log("Trying VMU path = \"{}\"", path);
+		
+		size_t size = 0;
+		uint8 *contents;
+		if (fs_load(path.c_str(), &contents) == -1) {
+			LogError("fs_load(\"{}\", &contents) = -1", path);
+			continue; // Try next path
+		}
+
+		vmu_pkg_t package;
+		if (vmu_pkg_parse(contents, &package) < 0) {
+			free(contents);
+			LogError("vmu_pkg_parse = -1");
+			continue; // Try next path
+		}
+		
+		// Found a working path
+		workingVmuPath = i;
+		Log("Found working VMU path: {}", vmuPaths[i]);
+		Log("Parsed package {} ({})", package.desc_short, package.desc_long);
+		fileSize = package.data_len;
+		std::unique_ptr<std::byte[]> result;
+		result.reset(new std::byte[fileSize]);
+		memcpy(result.get(), package.data, fileSize);
+		free(contents);
+		return result;
+	}
+	
+	// No working paths found
+	error = 1;
+	LogError("No working VMU paths found for reading");
+	return nullptr;
 }
 
 bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t size)
 {
 	Log("SaveWriter::WriteFile(\"{}\", data[], {})", filename, size);
-	const std::string path = dir_ + filename;
-	Log("dir_ = {}", dir_);
-	Log("path = {}", path);
-	const char *baseName = basename(path.c_str());
+	
+	// If we already know a working path, use it
+	if (workingVmuPath >= 0) {
+		std::string basePath = vmuPaths[workingVmuPath];
+		std::string finalDir = basePath;
+		// Extract the save directory from the original path
+		if (dir_.find('/') != std::string::npos) {
+			finalDir += dir_.substr(dir_.find_last_of('/'));
+		}
+		const std::string path = finalDir + filename;
+		Log("Using known working VMU path = \"{}\"", path);
+		
+		const char *baseName = basename(path.c_str());
 
-	// vmu code
-	if (dir_.starts_with("/vmu")) {
 		vmu_pkg_t package;
 		strcpy(package.app_id, "DevilutionX");
 		strncpy(package.desc_short, filename, 20);
@@ -635,37 +715,117 @@ bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t s
 		if (vmu_pkg_build(&package, &contents, &packageSize) < 0) {
 			delete[] package.data;
 			LogError("vmu_pkg_build failed");
-			app_fatal("vmu_pkg_build failed");
 			return false;
 		}
+		
+		// Create directory structure if needed
+		// Extract directory from path
+		std::string dirPath = path.substr(0, path.find_last_of('/'));
+		Log("Ensuring directory exists: {}", dirPath);
+		fs_mkdir(dirPath.c_str());
+		
 		FILE *file = OpenFile(path.c_str(), "wb");
 		if (file == nullptr) {
 			delete[] package.data;
 			free(contents);
 			LogError("fopen(\"{}\", \"wb\") = nullptr", path);
-			app_fatal("SaveReader::WriteFile KO");
 			return false;
 		}
+		
 		size_t written = std::fwrite(contents, sizeof(uint8), packageSize, file);
 		if (written != packageSize) {
 			delete[] package.data;
 			free(contents);
 			std::fclose(file);
 			LogError("fwrite(data, {}, {}, file) = {} != -1", sizeof(uint8), packageSize, written);
-			app_fatal("vmu fwrite call failed");
 			return false;
 		}
+		
 		if (std::fclose(file) != 0) {
 			delete[] package.data;
 			free(contents);
 			LogError("fclose(file) = 0");
-			app_fatal("fclose(file) = 0");
 			return false;
 		}
+		
 		delete[] package.data;
 		free(contents);
 		return true;
 	}
+	
+	// Try all possible VMU paths until one works
+	for (int i = 0; i < numVmuPaths; i++) {
+		std::string basePath = vmuPaths[i];
+		std::string finalDir = basePath;
+		// Extract the save directory from the original path
+		if (dir_.find('/') != std::string::npos) {
+			finalDir += dir_.substr(dir_.find_last_of('/'));
+		}
+		const std::string path = finalDir + filename;
+		Log("Trying VMU path = \"{}\"", path);
+		
+		const char *baseName = basename(path.c_str());
+
+		vmu_pkg_t package;
+		strcpy(package.app_id, "DevilutionX");
+		strncpy(package.desc_short, filename, 20);
+		strcpy(package.desc_long, "Diablo 1 save data");
+		package.icon_cnt = 0;
+		package.icon_anim_speed = 0;
+		package.eyecatch_type = VMUPKG_EC_NONE;
+		package.data_len = size;
+		package.data = new uint8[size];
+		memcpy(package.data, data, size);
+
+		uint8 *contents;
+		size_t packageSize;
+		if (vmu_pkg_build(&package, &contents, &packageSize) < 0) {
+			delete[] package.data;
+			LogError("vmu_pkg_build failed for path {}", path);
+			continue; // Try next path
+		}
+		
+		// Create directory structure if needed
+		// Extract directory from path
+		std::string dirPath = path.substr(0, path.find_last_of('/'));
+		Log("Ensuring directory exists: {}", dirPath);
+		fs_mkdir(dirPath.c_str());
+		
+		FILE *file = OpenFile(path.c_str(), "wb");
+		if (file == nullptr) {
+			delete[] package.data;
+			free(contents);
+			LogError("fopen(\"{}\", \"wb\") = nullptr", path);
+			continue; // Try next path
+		}
+		
+		size_t written = std::fwrite(contents, sizeof(uint8), packageSize, file);
+		if (written != packageSize) {
+			delete[] package.data;
+			free(contents);
+			std::fclose(file);
+			LogError("fwrite error for path {}", path);
+			continue; // Try next path
+		}
+		
+		if (std::fclose(file) != 0) {
+			delete[] package.data;
+			free(contents);
+			LogError("fclose error for path {}", path);
+			continue; // Try next path
+		}
+		
+		// Found a working path
+		workingVmuPath = i;
+		Log("Found working VMU path: {}", vmuPaths[i]);
+		delete[] package.data;
+		free(contents);
+		return true;
+	}
+	
+	// No working paths found
+	LogError("No working VMU paths found for writing");
+	return false;
 }
 #else
 std::unique_ptr<std::byte[]> SaveReader::ReadFile(const char *filename, std::size_t &fileSize, int32_t &error)
