@@ -217,7 +217,6 @@ void snd_init()
 {
 #ifdef __DREAMCAST__
 	::snd_init();
-	Log(LogCategory::Audio, "Dreamcast sound system initialized with buffer size: {}", *sgOptions.Audio.bufferSize);
 #endif
 	sgOptions.Audio.soundVolume.SetValue(CapVolume(*sgOptions.Audio.soundVolume));
 	gbSoundOn = *sgOptions.Audio.soundVolume > VOLUME_MIN;
