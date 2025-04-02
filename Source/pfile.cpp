@@ -62,9 +62,6 @@ const char* vmuPaths[] = {
 const int numVmuPaths = sizeof(vmuPaths) / sizeof(vmuPaths[0]);
 // Current working VMU path index - will be set when one is found working
 int workingVmuPath = -1;
-
-// Flag to suppress VMU error popups until we've tried all paths
-bool suppressVmuErrors = true;
 #endif
 
 // ---------------------------------- SECTION 3: INCLUDE UNPACKED SAVES ----------------------------------
@@ -75,6 +72,11 @@ bool suppressVmuErrors = true;
 #endif
 
 namespace devilution {
+
+#ifdef __DREAMCAST__
+// Flag to suppress VMU error popups until we've tried all paths
+bool suppressVmuErrors = true;
+#endif
 
 // ---------------------------------- SECTION 4: CONSTANTS AND GLOBALS ----------------------------------
 #define PASSWORD_SPAWN_SINGLE "adslhfb1"
