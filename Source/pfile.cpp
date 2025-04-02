@@ -1,3 +1,4 @@
+// ---------------------------------- SECTION 1: FILE HEADER ----------------------------------
 /**
  * @file pfile.cpp
  *
@@ -32,6 +33,7 @@
 #include "utils/str_split.hpp"
 #include "utils/utf8.hpp"
 
+// ---------------------------------- SECTION 2: DREAMCAST SPECIFIC INCLUDES ----------------------------------
 #ifdef __DREAMCAST__
 #include <dc/vmu_pkg.h>
 #include <kos/fs.h>
@@ -60,8 +62,12 @@ const char* vmuPaths[] = {
 const int numVmuPaths = sizeof(vmuPaths) / sizeof(vmuPaths[0]);
 // Current working VMU path index - will be set when one is found working
 int workingVmuPath = -1;
+
+// Flag to suppress VMU error popups until we've tried all paths
+bool suppressVmuErrors = true;
 #endif
 
+// ---------------------------------- SECTION 3: INCLUDE UNPACKED SAVES ----------------------------------
 #ifdef UNPACKED_SAVES
 #include "utils/file_util.h"
 #else
@@ -70,6 +76,7 @@ int workingVmuPath = -1;
 
 namespace devilution {
 
+// ---------------------------------- SECTION 4: CONSTANTS AND GLOBALS ----------------------------------
 #define PASSWORD_SPAWN_SINGLE "adslhfb1"
 #define PASSWORD_SPAWN_MULTI "lshbkfg1"
 #define PASSWORD_SINGLE "xrgyrkj1"
@@ -82,6 +89,7 @@ namespace {
 /** List of character names for the character selection screen. */
 char hero_names[MAX_CHARACTERS][PlayerNameLength];
 
+// ---------------------------------- SECTION 5: PATH HANDLING FUNCTIONS ----------------------------------
 std::string GetSavePath(uint32_t saveNum, std::string_view savePrefix = {})
 {
 	return StrCat(paths::PrefPath(), savePrefix,
@@ -173,6 +181,7 @@ void RenameTempToPerm(SaveWriter &saveWriter)
 	assert(!GetPermSaveNames(dwIndex, szPerm));
 }
 
+// ---------------------------------- SECTION 6: IO HANDLING FUNCTIONS ----------------------------------
 bool ReadHero(SaveReader &archive, PlayerPack *pPack)
 {
 	size_t read;
@@ -215,6 +224,7 @@ SaveWriter GetStashWriter()
 	return SaveWriter(GetStashSavePath());
 }
 
+// ---------------------------------- SECTION 7: DEMO MODE FUNCTIONS ----------------------------------
 #ifndef DISABLE_DEMOMODE
 void CopySaveFile(uint32_t saveNum, std::string targetPath)
 {
@@ -233,6 +243,7 @@ void CopySaveFile(uint32_t saveNum, std::string targetPath)
 }
 #endif
 
+// ---------------------------------- SECTION 8: PLAYER AND UI FUNCTIONS ----------------------------------
 void Game2UiPlayer(const Player &player, _uiheroinfo *heroinfo, bool bHasSaveFile)
 {
 	CopyUtf8(heroinfo->name, player._pName, sizeof(heroinfo->name));
@@ -308,6 +319,7 @@ std::optional<SaveReader> CreateSaveReader(std::string &&path)
 #endif
 }
 
+// ---------------------------------- SECTION 9: DEMO MODE COMPARISON FUNCTIONS ----------------------------------
 #ifndef DISABLE_DEMOMODE
 struct CompareInfo {
 	std::unique_ptr<std::byte[]> &data;
@@ -565,6 +577,7 @@ HeroCompareResult CompareSaves(const std::string &actualSavePath, const std::str
 }
 #endif // !DISABLE_DEMOMODE
 
+// ---------------------------------- SECTION 10: HERO AND GAME FUNCTIONS ----------------------------------
 void pfile_write_hero(SaveWriter &saveWriter, bool writeGameData)
 {
 	Log("pfile_write_hero with writeGameData = {}", writeGameData);
@@ -599,6 +612,7 @@ void RemoveAllInvalidItems(Player &player)
 
 } // namespace
 
+// ---------------------------------- SECTION 11: DREAMCAST SPECIFIC VMU FUNCTIONS ----------------------------------
 #ifdef UNPACKED_SAVES
 #ifdef __DREAMCAST__
 std::unique_ptr<std::byte[]> SaveReader::ReadFile(const char *filename, std::size_t &fileSize, int32_t &error)
@@ -614,9 +628,9 @@ std::unique_ptr<std::byte[]> SaveReader::ReadFile(const char *filename, std::siz
 		const std::string path = finalDir + filename;
 		Log("Using known working VMU path = \"{}\"", path);
 		
-		size_t size = 0;
 		uint8 *contents;
-		if (fs_load(path.c_str(), &contents) == -1) {
+		// Cast to void** as required by fs_load
+		if (fs_load(path.c_str(), (void**)&contents) == -1) {
 			error = 1;
 			LogError("fs_load(\"{}\", &contents) = -1", path);
 			return nullptr;
@@ -650,9 +664,9 @@ std::unique_ptr<std::byte[]> SaveReader::ReadFile(const char *filename, std::siz
 		const std::string path = finalDir + filename;
 		Log("Trying VMU path = \"{}\"", path);
 		
-		size_t size = 0;
 		uint8 *contents;
-		if (fs_load(path.c_str(), &contents) == -1) {
+		// Cast to void** as required by fs_load
+		if (fs_load(path.c_str(), (void**)&contents) == -1) {
 			LogError("fs_load(\"{}\", &contents) = -1", path);
 			continue; // Try next path
 		}
@@ -673,12 +687,14 @@ std::unique_ptr<std::byte[]> SaveReader::ReadFile(const char *filename, std::siz
 		result.reset(new std::byte[fileSize]);
 		memcpy(result.get(), package.data, fileSize);
 		free(contents);
+		suppressVmuErrors = false; // Reset error suppression since we found a working path
 		return result;
 	}
 	
 	// No working paths found
 	error = 1;
 	LogError("No working VMU paths found for reading");
+	suppressVmuErrors = false; // Reset error suppression since we've tried all paths
 	return nullptr;
 }
 
@@ -697,8 +713,8 @@ bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t s
 		const std::string path = finalDir + filename;
 		Log("Using known working VMU path = \"{}\"", path);
 		
-		const char *baseName = basename(path.c_str());
-
+		// We don't need basename here so we'll remove it
+		
 		vmu_pkg_t package;
 		strcpy(package.app_id, "DevilutionX");
 		strncpy(package.desc_short, filename, 20);
@@ -708,15 +724,18 @@ bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t s
 		package.eyecatch_type = VMUPKG_EC_NONE;
 		package.data_len = size;
 		package.data = new uint8[size];
-		memcpy(package.data, data, size);
+		// Use a proper cast for memcpy
+		memcpy((void*)package.data, (const void*)data, size);
 
 		uint8 *contents;
-		size_t packageSize;
-		if (vmu_pkg_build(&package, &contents, &packageSize) < 0) {
+		int packageSizeInt;
+		// Fix the vmu_pkg_build call to use int* instead of size_t*
+		if (vmu_pkg_build(&package, &contents, &packageSizeInt) < 0) {
 			delete[] package.data;
 			LogError("vmu_pkg_build failed");
 			return false;
 		}
+		size_t packageSize = packageSizeInt;
 		
 		// Create directory structure if needed
 		// Extract directory from path
@@ -724,7 +743,7 @@ bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t s
 		Log("Ensuring directory exists: {}", dirPath);
 		fs_mkdir(dirPath.c_str());
 		
-		FILE *file = OpenFile(path.c_str(), "wb");
+		FILE *file = devilution::OpenFile(path.c_str(), "wb");
 		if (file == nullptr) {
 			delete[] package.data;
 			free(contents);
@@ -750,6 +769,7 @@ bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t s
 		
 		delete[] package.data;
 		free(contents);
+		suppressVmuErrors = false; // Reset error suppression since we found a working path
 		return true;
 	}
 	
@@ -764,7 +784,7 @@ bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t s
 		const std::string path = finalDir + filename;
 		Log("Trying VMU path = \"{}\"", path);
 		
-		const char *baseName = basename(path.c_str());
+		// We don't need basename here so we'll remove it
 
 		vmu_pkg_t package;
 		strcpy(package.app_id, "DevilutionX");
@@ -775,15 +795,18 @@ bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t s
 		package.eyecatch_type = VMUPKG_EC_NONE;
 		package.data_len = size;
 		package.data = new uint8[size];
-		memcpy(package.data, data, size);
+		// Use a proper cast for memcpy
+		memcpy((void*)package.data, (const void*)data, size);
 
 		uint8 *contents;
-		size_t packageSize;
-		if (vmu_pkg_build(&package, &contents, &packageSize) < 0) {
+		int packageSizeInt;
+		// Fix the vmu_pkg_build call to use int* instead of size_t*
+		if (vmu_pkg_build(&package, &contents, &packageSizeInt) < 0) {
 			delete[] package.data;
 			LogError("vmu_pkg_build failed for path {}", path);
 			continue; // Try next path
 		}
+		size_t packageSize = packageSizeInt;
 		
 		// Create directory structure if needed
 		// Extract directory from path
@@ -791,7 +814,7 @@ bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t s
 		Log("Ensuring directory exists: {}", dirPath);
 		fs_mkdir(dirPath.c_str());
 		
-		FILE *file = OpenFile(path.c_str(), "wb");
+		FILE *file = devilution::OpenFile(path.c_str(), "wb");
 		if (file == nullptr) {
 			delete[] package.data;
 			free(contents);
@@ -820,11 +843,13 @@ bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t s
 		Log("Found working VMU path: {}", vmuPaths[i]);
 		delete[] package.data;
 		free(contents);
+		suppressVmuErrors = false; // Reset error suppression since we found a working path
 		return true;
 	}
 	
 	// No working paths found
 	LogError("No working VMU paths found for writing");
+	suppressVmuErrors = false; // Reset error suppression since we've tried all paths
 	return false;
 }
 #else
@@ -839,7 +864,7 @@ std::unique_ptr<std::byte[]> SaveReader::ReadFile(const char *filename, std::siz
 		return nullptr;
 	}
 	fileSize = size;
-	FILE *file = OpenFile(path.c_str(), "rb");
+	FILE *file = devilution::OpenFile(path.c_str(), "rb");
 	if (file == nullptr) {
 		error = 1;
 		return nullptr;
@@ -857,7 +882,7 @@ std::unique_ptr<std::byte[]> SaveReader::ReadFile(const char *filename, std::siz
 bool SaveWriter::WriteFile(const char *filename, const std::byte *data, size_t size)
 {
 	const std::string path = dir_ + filename;
-	FILE *file = OpenFile(path.c_str(), "wb");
+	FILE *file = devilution::OpenFile(path.c_str(), "wb");
 	if (file == nullptr) {
 		return false;
 	}
@@ -879,7 +904,7 @@ void SaveWriter::RemoveHashEntries(bool (*fnGetName)(uint8_t, char *))
 	}
 }
 #endif // def UNPACKED_SAVES
-
+// ---------------------------------- SECTION 12: PUBLIC API FUNCTIONS ----------------------------------
 std::optional<SaveReader> OpenSaveArchive(uint32_t saveNum)
 {
 	return CreateSaveReader(GetSavePath(saveNum));
