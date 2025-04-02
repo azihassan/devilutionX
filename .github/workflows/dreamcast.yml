@@ -32,6 +32,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Patch KOS for streaming a large quantity of files
+        run: |
+          source /opt/toolchains/dc/kos/environ.sh && \
+          cd /opt/toolchains/dc/kos && \
+          make clean && make CFLAGS+="-DFS_CD_MAX_FILES=4096 -DFD_SETSIZE=4096"
+
       - name: Build unpack_and_minify_mpq
         run: |
           git clone https://github.com/diasurgical/devilutionx-mpq-tools/ && \
@@ -82,7 +88,7 @@ jobs:
 
       - name: Build DevilutionX
         run: |
-          source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
+          source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make -j4
 
       - name: Generate .cdi
         run: |
