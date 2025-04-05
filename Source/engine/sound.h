@@ -14,8 +14,8 @@
 
 #ifndef NOSOUND
 #ifdef __DREAMCAST__
-#include "memory_stats.h"
 #include <dc/sound/sound.h>
+// #include "memory_stats.h"
 #endif
 
 #include "utils/soundsample.h"

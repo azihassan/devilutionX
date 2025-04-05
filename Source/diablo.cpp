@@ -107,7 +107,9 @@
 #endif
 
 #ifdef __DREAMCAST__
-#include "memory_stats.h"
+// #include "memory_stats.h"
+#include "vmu.h"
+#include <dc/pvr.h>
 #endif
 
 namespace devilution {
@@ -856,6 +858,9 @@ void RunGameLoop(interface_mode uMsg)
 #endif
 
 	while (gbRunGame) {
+#ifdef __DREAMCAST__
+		VmuProfiler::getInstance()->updateVertexBufferUsage();
+#endif
 
 #ifdef _DEBUG
 		if (!gbGameLoopStartup && !DebugCmdsFromCommandLine.empty()) {
@@ -2548,7 +2553,9 @@ void setOnInitialized(void (*callback)())
 int DiabloMain(int argc, char **argv)
 {
 #ifdef __DREAMCAST__
-	set_system_ram();
+	// set_system_ram();
+	// VmuProfiler::getInstance();
+	pvr_init_defaults();
 #endif
 #ifdef _DEBUG
 	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_DEBUG);

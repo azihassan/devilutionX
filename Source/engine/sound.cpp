@@ -78,8 +78,8 @@ bool LoadAudioFile(const char *path, bool stream, bool errorDialog, SoundSample 
 
 #ifdef __DREAMCAST__
 	Log(">AUDIO: Loading audio file {} with streaming {} ({} kilobytes)", foundPath, stream, ref.size() / 1024.0);
-	print_ram_stats();
-	Log("\n\n\n");
+	// print_ram_stats();
+	// Log("\n\n\n");
 #endif
 	if (stream) {
 		if (result.SetChunkStream(foundPath, isMp3, /*logErrors=*/true) != 0) {
