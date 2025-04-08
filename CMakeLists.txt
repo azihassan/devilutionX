@@ -519,6 +519,10 @@ if(NXDK)
   add_custom_target(nxdk_xbe DEPENDS "${_xbe_path}")
 endif()
 
+if(PLATFORM_DREAMCAST)
+  target_link_libraries(${BIN_TARGET} PRIVATE libwav.a)
+endif()
+
 if(CPACK AND (APPLE OR BUILD_ASSETS_MPQ OR SRC_DIST))
   if(WIN32)
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
