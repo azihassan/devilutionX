@@ -8,7 +8,7 @@ RUN source /opt/toolchains/dc/kos/environ.sh && \
     sed -i 's/THD_STACK_SIZE  32768/THD_STACK_SIZE  (128*1024)/g' /opt/toolchains/dc/kos/kernel/arch/dreamcast/include/arch/arch.h && \
     echo "THD_STACK_SIZE changed to $(cat /opt/toolchains/dc/kos/kernel/arch/dreamcast/include/arch/arch.h | grep THD_STACK_SIZE)" && \
     make clean && \
-    make CFLAGS+="-DFS_CD_MAX_FILES=4096 -DFD_SETSIZE=4096"
+    make CFLAGS+="-DFS_CD_MAX_FILES=4096 -DFD_SETSIZE=4096 -DMAKEIP_VERSION=2"
 
 RUN echo "Building unpack_and_minify_mpq..."
 RUN git clone https://github.com/diasurgical/devilutionx-mpq-tools/ && \
