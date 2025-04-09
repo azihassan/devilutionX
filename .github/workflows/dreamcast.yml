@@ -25,7 +25,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: azihassan/kallistios:fdffe33635239d46bcccf0d5c4d59bb7d2d91f38
+    container: azihassan/kallistios:1b9c7b6bc4858d947a12675c58122951dd42c4db
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,10 +36,6 @@ jobs:
         run: |
           source /opt/toolchains/dc/kos/environ.sh && \
           cd /opt/toolchains/dc/kos && \
-          sed -i 's/THD_KERNEL_STACK_SIZE (64 \* 1024)/THD_KERNEL_STACK_SIZE (256 \* 1024)/g' /opt/toolchains/dc/kos/kernel/arch/dreamcast/include/arch/arch.h && \
-          echo "THD_KERNEL_STACK_SIZE changed to $(cat /opt/toolchains/dc/kos/kernel/arch/dreamcast/include/arch/arch.h | grep THD_KERNEL_STACK_SIZE)" && \
-          sed -i 's/THD_STACK_SIZE  32768/THD_STACK_SIZE  (128*1024)/g' /opt/toolchains/dc/kos/kernel/arch/dreamcast/include/arch/arch.h && \
-          echo "THD_STACK_SIZE changed to $(cat /opt/toolchains/dc/kos/kernel/arch/dreamcast/include/arch/arch.h | grep THD_STACK_SIZE)" && \
           make clean && make CFLAGS+="-DFS_CD_MAX_FILES=4096 -DFD_SETSIZE=4096 -DMAKEIP_VERSION=2"
 
       - name: Build unpack_and_minify_mpq

@@ -1,4 +1,4 @@
-FROM azihassan/kallistios:8c7fbfcf3c38c4da82bc067e1719b74c2f93f755
+FROM azihassan/kallistios:1b9c7b6bc4858d947a12675c58122951dd42c4db
 
 RUN echo "Patching KOS for streaming a large quantity of files"
 RUN source /opt/toolchains/dc/kos/environ.sh && \
