@@ -3,10 +3,7 @@ FROM azihassan/kallistios:1b9c7b6bc4858d947a12675c58122951dd42c4db
 RUN echo "Patching KOS for streaming a large quantity of files"
 RUN source /opt/toolchains/dc/kos/environ.sh && \
     cd /opt/toolchains/dc/kos && \
-    sed -i 's/THD_KERNEL_STACK_SIZE (64 \* 1024)/THD_KERNEL_STACK_SIZE (256 \* 1024)/g' /opt/toolchains/dc/kos/kernel/arch/dreamcast/include/arch/arch.h && \
-    echo "THD_KERNEL_STACK_SIZE changed to $(cat /opt/toolchains/dc/kos/kernel/arch/dreamcast/include/arch/arch.h | grep THD_KERNEL_STACK_SIZE)" && \
-    sed -i 's/THD_STACK_SIZE  32768/THD_STACK_SIZE  (128*1024)/g' /opt/toolchains/dc/kos/kernel/arch/dreamcast/include/arch/arch.h && \
-    echo "THD_STACK_SIZE changed to $(cat /opt/toolchains/dc/kos/kernel/arch/dreamcast/include/arch/arch.h | grep THD_STACK_SIZE)" && \
+    git reset --hard dca7f6d86be234b6488bd9d7e05aef0fa10f8d96 && \
     make clean && \
     make CFLAGS+="-DFS_CD_MAX_FILES=4096 -DFD_SETSIZE=4096 -DMAKEIP_VERSION=2"
 
