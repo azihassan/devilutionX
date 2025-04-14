@@ -27,7 +27,7 @@
 // todo remove this
 // changing this value in dreamcast.cmake causes the whole project to recompile
 // redefined here to only recompile sound.cpp
-#define STREAM_ALL_AUDIO_MIN_FILE_SIZE 25 * 1024
+#define STREAM_ALL_AUDIO_MIN_FILE_SIZE 22 * 1024
 
 namespace devilution {
 
@@ -231,11 +231,16 @@ void snd_init()
 	gbMusicOn = *sgOptions.Audio.musicVolume > VOLUME_MIN;
 
 #ifdef __DREAMCAST__
+	printf("snd_init() in sound.cpp\n");
 	gbMusicOn = true;
 	// spu_init();
-	//::snd_init();
+	::snd_init();
 	snd_stream_init();
-	assert(1 == wav_init());
+	// assert(1 == wav_init());
+	if (!wav_init()) {
+		LogError(LogCategory::Audio, "Failed to initialize audio (wav_init)");
+		return;
+	}
 #else
 	// Initialize the SDL_audiolib library. Set the output sample rate to
 	// 22kHz, the audio format to 16-bit signed, use 2 output channels
@@ -255,10 +260,11 @@ void snd_init()
 void snd_deinit()
 {
 	if (gbSndInited) {
+		printf("snd_deinit() in sound.cpp\n");
 #ifdef __DREAMCAST__
 		wav_shutdown();
 		snd_stream_shutdown();
-		//::snd_shutdown();
+		::snd_shutdown();
 #else
 		Aulib::quit();
 #endif
