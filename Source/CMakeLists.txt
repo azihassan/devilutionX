@@ -282,7 +282,11 @@ if(DEVILUTIONX_SCREENSHOT_FORMAT STREQUAL DEVILUTIONX_SCREENSHOT_FORMAT_PNG)
   )
 endif()
 if(PLATFORM_DREAMCAST)
-  list(APPEND libdevilutionx_SRCS memory_stats.cpp)
+  list(APPEND libdevilutionx_SRCS
+    memory_stats.cpp
+    libwav.c
+    sndwav.c
+  )
 endif()
 
 add_devilutionx_library(libdevilutionx OBJECT ${libdevilutionx_SRCS})
