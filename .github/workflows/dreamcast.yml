@@ -95,10 +95,15 @@ jobs:
         run: |
           source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make -j4
 
+      - name: Downgrade wavs to mono, 11025 hz sample rate and 4-bit Yamaha ADPCM
+        run: |
+          apk add ffmpeg && \
+          cp -R spawn build/data/spawn && \
+          for f in $(find spawn -name '*.wav'); do ffmpeg -y -i $f -acodec adpcm_yamaha -ac 1 -ar 11025 "build/data/$f"; done
+
       - name: Generate .cdi
         run: |
           source /opt/toolchains/dc/kos/environ.sh && \
-          mv spawn build/data/spawn && \
           mv fonts/fonts/ build/data/fonts/ && \
           mkdcdisc -e build/devilutionx.elf -o build/devilutionx.cdi --name 'Diablo 1' -d build/data/
 
