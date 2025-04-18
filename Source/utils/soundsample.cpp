@@ -178,18 +178,18 @@ int SoundSample::GetLength() const
 
 void SoundSample::Release()
 {
-	// Log("SoundSample::Release({})", file_path_);
-	if (stream_ != SND_STREAM_INVALID) {
-		wav_destroy(stream_);
-		stream_ = SND_STREAM_INVALID;
-	}
-	if (file_data_ != SFXHND_INVALID) {
-		snd_sfx_unload(file_data_);
-		file_data_ = SFXHND_INVALID;
-		channel_ = -1;
-	}
-	volume_ = 0;
-	previousVolume_ = 0;
+        // Log("SoundSample::Release({})", file_path_);
+        if(stream_ != SND_STREAM_INVALID) {
+            wav_destroy(stream_);
+            stream_ = SND_STREAM_INVALID;
+        }
+        if(file_data_ != SFXHND_INVALID) {
+            snd_sfx_unload(file_data_);
+            file_data_ = SFXHND_INVALID;
+            channel_ = -1;
+        }
+        volume_ = 0;
+        previousVolume_ = 0;
 	file_data_size_ = 0;
 }
 
@@ -199,40 +199,40 @@ void SoundSample::Release()
 bool SoundSample::IsPlaying()
 {
 	// Log("SoundSample::IsPlaying({})", file_path_);
-	if (IsStreaming()) {
+	if(IsStreaming()) {
 		// Log("wav_is_playing({}) = {}", file_path_, wav_is_playing(stream_));
 		return wav_is_playing(stream_);
-	} else {
-		return snd_is_playing(channel_);
 	}
+	//todo figure out why snd_is_playing(channel_) always returns true after sound effect is played the first time
+	// Log("snd_is_playing({}, {}) = {}", channel_, file_data_, file_data_ != SFXHND_INVALID && channel_ != -1 && snd_is_playing(channel_));
+	return file_data_ != SFXHND_INVALID && channel_ != -1 && snd_is_playing(channel_);
 }
 
 bool SoundSample::Play(int numIterations)
 {
-	// Log("SoundSample::Play({}, {})", file_path_, numIterations);
-	if (IsStreaming()) {
-		Log("Streaming {} with audio 255", file_path_);
-		wav_volume(stream_, 255);
-		wav_play(stream_);
-		return true;
-	}
-	volume_ = 255;
-	// Log("snd_sfx_play({}, {}, {})", file_path_, volume_, pan_);
-	int channel = snd_sfx_play(file_data_, volume_, pan_);
-	if (channel == -1) {
+    // Log("SoundSample::Play({}, {})", file_path_, numIterations);
+    if(IsStreaming()) {
+        // Log("Streaming {} with audio 255", file_path_);
+        wav_volume(stream_, 255);
+        wav_play(stream_);
+        return true;
+    }
+    volume_ = 255;
+    // Log("snd_sfx_play({}, {}, {})", file_path_, volume_, pan_);
+    channel_ = snd_sfx_play(file_data_, volume_, pan_);
+    if(channel_ == -1) {
 		LogError(LogCategory::Audio, "Aulib::Stream::play (from SoundSample::Play): {}", SDL_GetError());
-		return false;
-	}
-	channel_ = channel;
-	return true;
+                return false;
+    }
+    return true;
 }
 
 int SoundSample::SetChunkStream(std::string filePath, bool isMp3, bool logErrors)
 {
-	Log("SoundSample::SetChunkStream({}, {}, {})", filePath, isMp3, logErrors);
+        // Log("SoundSample::SetChunkStream({}, {}, {})", filePath, isMp3, logErrors);
 
 	stream_ = wav_create(filePath.c_str(), filePath.find("music") != std::string::npos);
-	Log("stream_ = {} for {}", stream_, filePath);
+        // Log("stream_ = {} for {}", stream_, filePath);
 	if (stream_ == SND_STREAM_INVALID) {
 		if (logErrors)
 			LogError(LogCategory::Audio, "wav_create failed (from SoundSample::SetChunkStream) for {}", filePath);
@@ -240,17 +240,17 @@ int SoundSample::SetChunkStream(std::string filePath, bool isMp3, bool logErrors
 	}
 	file_path_ = filePath;
 	isMp3_ = isMp3;
-	file_data_ = SFXHND_INVALID;
-	volume_ = 255;
-	pan_ = 128;
-	wav_volume(stream_, volume_);
+        file_data_ = SFXHND_INVALID;
+        volume_ = 255;
+        pan_ = 128;
+        wav_volume(stream_, volume_);
 	snd_stream_pan(stream_, 128, 128);
-	return 0;
+        return 0;
 }
 
 int SoundSample::SetChunk(std::string filePath, std::size_t dwBytes, bool isMp3)
 {
-	// Log("SoundSample::SetChunk({}, {}, {})", filePath, dwBytes, isMp3_);
+        // Log("SoundSample::SetChunk({}, {}, {})", filePath, dwBytes, isMp3_);
 	isMp3_ = isMp3;
 	file_path_ = filePath;
 	// Log("snd_sfx_load({})", filePath);
@@ -261,39 +261,39 @@ int SoundSample::SetChunk(std::string filePath, std::size_t dwBytes, bool isMp3)
 		return -1;
 	}
 
-	volume_ = 255;
-	pan_ = 128;
-	stream_ = SND_STREAM_INVALID;
+        volume_ = 255;
+        pan_ = 128;
+        stream_ = SND_STREAM_INVALID;
 	return 0;
 }
 
 void SoundSample::SetVolume(int logVolume, int logMin, int logMax)
 {
-	// Log("SoundSample::SetVolume({}, {}, {}, {}) (vol = {})", file_path_, logVolume, logMin, logMax, VolumeLogToLinear(logVolume, logMin, logMax));
-	if (IsStreaming()) {
-		previousVolume_ = volume_;
-		volume_ = VolumeLogToLinear(logVolume, logMin, logMax);
-		wav_volume(stream_, 255);
-	} else {
-		previousVolume_ = volume_;
-		volume_ = VolumeLogToLinear(logVolume, logMin, logMax);
-	}
+        // Log("SoundSample::SetVolume({}, {}, {}, {}) (vol = {})", file_path_, logVolume, logMin, logMax, VolumeLogToLinear(logVolume, logMin, logMax));
+    if(IsStreaming()) {
+        previousVolume_ = volume_;
+        volume_ = VolumeLogToLinear(logVolume, logMin, logMax);
+        wav_volume(stream_, 255);
+    } else {
+        previousVolume_ = volume_;
+        volume_ = VolumeLogToLinear(logVolume, logMin, logMax);
+    }
 }
 
 void SoundSample::SetStereoPosition(int logPan)
 {
-	// Log("SoundSample::SetStereoPosition({}, {}) (stereo = {})", file_path_, logPan, PanLogToLinear(logPan));
-	if (IsStreaming()) {
-		// Log("pan is not supported in libwav on the Dreamcast");
-		snd_stream_pan(stream_, 128, 128);
-	} else {
-		pan_ = PanLogToLinear(logPan);
-	}
+        // Log("SoundSample::SetStereoPosition({}, {}) (stereo = {})", file_path_, logPan, PanLogToLinear(logPan));
+    if(IsStreaming()) {
+	//Log("pan is not supported in libwav on the Dreamcast");
+	snd_stream_pan(stream_, 128, 128);
+    } else {
+        pan_ = PanLogToLinear(logPan);
+    }
 }
 
 int SoundSample::GetLength() const
 {
-	Log("SoundSample::GetLength({})", file_path_);
+        //Log("SoundSample::GetLength({})", file_path_);
 	if (IsStreaming())
 		return 10000;
 	return 1000;

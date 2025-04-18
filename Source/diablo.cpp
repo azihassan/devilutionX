@@ -108,6 +108,7 @@
 
 #ifdef __DREAMCAST__
 #include "memory_stats.h"
+#include <kos/dbgio.h>
 #endif
 
 namespace devilution {
@@ -2548,6 +2549,7 @@ void setOnInitialized(void (*callback)())
 int DiabloMain(int argc, char **argv)
 {
 #ifdef __DREAMCAST__
+	// dbgio_dev_select("fb");
 	set_system_ram();
 #endif
 #ifdef _DEBUG

@@ -4405,7 +4405,12 @@ void PlayEffect(Monster &monster, MonsterSound mode)
 	}
 
 	TSnd *snd = monster.type().sounds[static_cast<size_t>(mode)][sndIdx].get();
+#ifdef __DREAMCAST__
+	//todo figure out why isPlaying() always returns true after sound effect is played the first time
+	if (snd == nullptr) {
+#else
 	if (snd == nullptr || snd->isPlaying()) {
+#endif
 		return;
 	}
 

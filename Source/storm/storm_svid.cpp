@@ -8,7 +8,9 @@
 #include <SmackerDecoder.h>
 
 #ifndef NOSOUND
+#ifndef __DREAMCAST__
 #include "utils/push_aulib_decoder.h"
+#endif
 #endif
 
 #include "engine/assets.hpp"
@@ -25,10 +27,12 @@ namespace devilution {
 namespace {
 
 #ifndef NOSOUND
+#ifndef __DREAMCAST__
 std::optional<Aulib::Stream> SVidAudioStream;
 PushAulibDecoder *SVidAudioDecoder;
 std::uint8_t SVidAudioDepth;
 std::unique_ptr<int16_t[]> SVidAudioBuffer;
+#endif
 #endif
 
 // Smacker's atomic time unit is a one hundred thousand's of a second (i.e. 0.01 millisecond, or 10 microseconds).
@@ -128,10 +132,12 @@ void TrySetVideoModeToSVidForSDL1()
 #endif
 
 #ifndef NOSOUND
+#ifndef __DREAMCAST__
 bool HasAudio()
 {
 	return SVidAudioStream && SVidAudioStream->isPlaying();
 }
+#endif
 #endif
 
 bool SVidLoadNextFrame()
@@ -266,6 +272,7 @@ bool SVidPlayBegin(const char *filename, int flags)
 	}
 
 #ifndef NOSOUND
+#ifndef __DREAMCAST__
 	const bool enableAudio = (flags & 0x1000000) == 0;
 
 	auto audioInfo = Smacker_GetAudioTrackDetails(SVidHandle, 0);
@@ -294,6 +301,7 @@ bool SVidPlayBegin(const char *filename, int flags)
 			SVidAudioDecoder = nullptr;
 		}
 	}
+#endif
 #endif
 
 	// SMK format internally defines the frame rate as the frame duration
@@ -355,6 +363,7 @@ bool SVidPlayContinue()
 	}
 
 #ifndef NOSOUND
+#ifndef __DREAMCAST__
 	if (HasAudio()) {
 		std::int16_t *buf = SVidAudioBuffer.get();
 		const auto len = Smacker_GetAudioData(SVidHandle, 0, buf);
@@ -364,6 +373,7 @@ bool SVidPlayContinue()
 			SVidAudioDecoder->PushSamples(reinterpret_cast<const std::uint8_t *>(buf), len);
 		}
 	}
+#endif
 #endif
 
 	if (GetTicksSmk() >= SVidFrameEnd) {
@@ -384,11 +394,13 @@ bool SVidPlayContinue()
 void SVidPlayEnd()
 {
 #ifndef NOSOUND
+#ifndef __DREAMCAST__
 	if (HasAudio()) {
 		SVidAudioStream = std::nullopt;
 		SVidAudioDecoder = nullptr;
 		SVidAudioBuffer = nullptr;
 	}
+#endif
 #endif
 
 	if (SVidHandle.isValid)
@@ -416,16 +428,20 @@ void SVidPlayEnd()
 void SVidMute()
 {
 #ifndef NOSOUND
+#ifndef __DREAMCAST__
 	if (SVidAudioStream)
 		SVidAudioStream->mute();
+#endif
 #endif
 }
 
 void SVidUnmute()
 {
 #ifndef NOSOUND
+#ifndef __DREAMCAST__
 	if (SVidAudioStream)
 		SVidAudioStream->unmute();
+#endif
 #endif
 }
 

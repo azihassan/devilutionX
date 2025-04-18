@@ -128,6 +128,9 @@ std::optional<SdlMutex> duplicateSoundsMutex;
 
 SoundSample *DuplicateSound(const SoundSample &sound)
 {
+#ifdef __DREAMCAST__
+	return nullptr;
+#endif
 	auto duplicate = std::make_unique<SoundSample>();
 	if (duplicate->DuplicateFrom(sound) != 0)
 		return nullptr;
@@ -194,11 +197,13 @@ void snd_play_snd(TSnd *pSnd, int lVolume, int lPan)
 	}
 
 	SoundSample *sound = &pSnd->DSB;
+#ifndef __DREAMCAST__
 	if (sound->IsPlaying()) {
 		sound = DuplicateSound(*sound);
 		if (sound == nullptr)
 			return;
 	}
+#endif
 
 	sound->PlayWithVolumeAndPan(lVolume, *sgOptions.Audio.soundVolume, lPan);
 	pSnd->start_tc = tc;

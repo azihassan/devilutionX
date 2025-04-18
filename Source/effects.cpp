@@ -312,7 +312,12 @@ void effects_play_sound(SfxID id)
 	}
 
 	TSFX &sfx = sgSFX[static_cast<int16_t>(id)];
+#ifdef __DREAMCAST__
+	//todo figure out why isPlaying() always returns true after sound effect is played the first time
+	if (sfx.pSnd != nullptr/* && !sfx.pSnd->isPlaying()*/) {
+#else
 	if (sfx.pSnd != nullptr && !sfx.pSnd->isPlaying()) {
+#endif
 		snd_play_snd(sfx.pSnd.get(), 0, 0);
 	}
 }

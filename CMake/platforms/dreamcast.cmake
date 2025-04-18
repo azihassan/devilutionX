@@ -47,8 +47,10 @@ set(JOY_BUTTON_START 3)
 set(SDL_INCLUDE_DIR /usr/include/SDL/)
 set(SDL_LIBRARY /usr/lib/libSDL.a)
 
-add_compile_options(-flto=auto)
+#set(DISABLE_LTO ON)
+#add_compile_options(-flto=none)
 #add_compile_options(-lwav)
+add_compile_options(-flto=auto)
 
 # Must stream most of the audio due to RAM constraints.
 set(STREAM_ALL_AUDIO_MIN_FILE_SIZE 1023)
