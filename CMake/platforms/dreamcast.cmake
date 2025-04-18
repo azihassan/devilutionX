@@ -10,7 +10,7 @@ set(DEFAULT_WIDTH 640)
 set(DEFAULT_HEIGHT 480)
 set(DEVILUTIONX_GAMEPAD_TYPE Nintendo)
 
-set(NOSOUND ON)
+#set(NOSOUND ON)
 set(DEVILUTIONX_STATIC_ZLIB ON)
 set(UNPACKED_MPQS ON)
 set(UNPACKED_SAVES ON)
@@ -21,7 +21,7 @@ set(DEVILUTIONX_DISABLE_STRIP ON)
 set(DEVILUTIONX_ASSETS_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/data/")
 set(BUILD_ASSETS_MPQ OFF)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/threads-stub")
+#list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/threads-stub")
 list(APPEND DEVILUTIONX_PLATFORM_COMPILE_DEFINITIONS __DREAMCAST__)
 add_compile_options(-fpermissive)
 
@@ -47,4 +47,16 @@ set(JOY_BUTTON_START 3)
 set(SDL_INCLUDE_DIR /usr/include/SDL/)
 set(SDL_LIBRARY /usr/lib/libSDL.a)
 
-add_compile_options(-flto=none)
+#set(DISABLE_LTO ON)
+#add_compile_options(-flto=none)
+#add_compile_options(-lwav)
+add_compile_options(-flto=auto)
+
+# Must stream most of the audio due to RAM constraints.
+set(STREAM_ALL_AUDIO_MIN_FILE_SIZE 1023)
+
+# Must use a smaller audio buffer due to RAM constraints.
+set(DEFAULT_AUDIO_BUFFER_SIZE 768)
+
+# Use lower resampling quality for FPS.
+set(DEFAULT_AUDIO_RESAMPLING_QUALITY 1)

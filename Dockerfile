@@ -1,4 +1,14 @@
-FROM azihassan/kallistios:fdffe33635239d46bcccf0d5c4d59bb7d2d91f38
+FROM azihassan/kallistios:1b9c7b6bc4858d947a12675c58122951dd42c4db
+
+RUN echo "Patching KOS for streaming a large quantity of files"
+RUN source /opt/toolchains/dc/kos/environ.sh && \
+    cd /opt/toolchains/dc/kos && \
+    git reset --hard dca7f6d86be234b6488bd9d7e05aef0fa10f8d96 && \
+    sed -i 's/#define SND_STREAM_MAX 4/#define SND_STREAM_MAX 128/g' kernel/arch/dreamcast/include/dc/sound/stream.h && \
+    echo "SND_STREAM_MAX changed to $(cat kernel/arch/dreamcast/include/dc/sound/stream.h | grep SND_STREAM_MAX)" && \
+    sed -i 's/#define SND_STREAM_BUFFER_MAX_ADPCM (32 << 10)/#define SND_STREAM_BUFFER_MAX_ADPCM (8 << 10)/g' kernel/arch/dreamcast/include/dc/sound/stream.h && \
+    echo "SND_STREAM_BUFFER_MAX_ADPCM changed to $(cat kernel/arch/dreamcast/include/dc/sound/stream.h | grep SND_STREAM_BUFFER_MAX_ADPCM)" && \
+    make clean && make CFLAGS+="-DFS_CD_MAX_FILES=4096 -DFD_SETSIZE=4096 -DMAKEIP_VERSION=2"
 
 RUN echo "Building unpack_and_minify_mpq..."
 RUN git clone https://github.com/diasurgical/devilutionx-mpq-tools/ && \
@@ -50,9 +60,15 @@ RUN source /opt/toolchains/dc/kos/environ.sh && \
 RUN echo "Compiling..."
 RUN source /opt/toolchains/dc/kos/environ.sh && cd build && kos-make
 
+RUN echo "Downgrading wavs to mono, 11025 hz sample rate and 4-bit Yamaha ADPCM..."
+RUN source /opt/toolchains/dc/kos/environ.sh && \
+    apk add ffmpeg && \
+    cp -R spawn build/data/spawn && \
+    for f in $(find spawn -name '*.wav'); do ffmpeg -y -i $f -acodec adpcm_yamaha -ac 1 -ar 11025 "build/data/$f"; done
+
 RUN echo "Generating CDI"
 RUN source /opt/toolchains/dc/kos/environ.sh && \
-    mv spawn build/data/spawn && \
+    rm -rf spawn && \
     mv fonts/fonts/ build/data/fonts/ && \
     #mv diabdat build/data/diabdat && \
     mkdcdisc -e build/devilutionx.elf -o build/devilutionx.cdi --name 'Diablo 1' -d build/data/

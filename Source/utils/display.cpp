@@ -314,7 +314,9 @@ bool SpawnWindow(const char *lpWindowName)
 
 	int initFlags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK;
 #ifndef NOSOUND
+#ifndef __DREAMCAST__
 	initFlags |= SDL_INIT_AUDIO;
+#endif
 #endif
 #ifndef USE_SDL1
 	initFlags |= SDL_INIT_GAMECONTROLLER;

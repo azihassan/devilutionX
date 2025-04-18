@@ -24,6 +24,11 @@
 #include "utils/str_cat.hpp"
 #include "utils/stubs.h"
 
+// todo remove this
+// changing this value in dreamcast.cmake causes the whole project to recompile
+// redefined here to only recompile sound.cpp
+#define STREAM_ALL_AUDIO_MIN_FILE_SIZE 22 * 1024
+
 namespace devilution {
 
 bool gbSndInited;
@@ -71,8 +76,17 @@ bool LoadAudioFile(const char *path, bool stream, bool errorDialog, SoundSample 
 #endif
 #endif
 
+#ifdef __DREAMCAST__
+	Log(">AUDIO: Loading audio file {} with streaming {} ({} kilobytes)", foundPath, stream, ref.size() / 1024.0);
+	print_ram_stats();
+	Log("\n\n\n");
+#endif
 	if (stream) {
+#ifdef __DREAMCAST__
+		if (result.SetChunkStream(ref.path, isMp3, /*logErrors=*/true) != 0) {
+#else
 		if (result.SetChunkStream(foundPath, isMp3, /*logErrors=*/true) != 0) {
+#endif
 			if (errorDialog) {
 				ErrDlg("Failed to load audio file", StrCat(foundPath, "\n", SDL_GetError(), "\n"), __FILE__, __LINE__);
 			}
@@ -88,6 +102,9 @@ bool LoadAudioFile(const char *path, bool stream, bool errorDialog, SoundSample 
 				ErrDlg("Failed to load audio file", StrCat(foundPath, "\n", SDL_GetError(), "\n"), __FILE__, __LINE__);
 			return false;
 		}
+#ifdef __DREAMCAST__
+		const int error = result.SetChunk(ref.path, size, isMp3);
+#else
 		auto waveFile = MakeArraySharedPtr<std::uint8_t>(size);
 		if (!handle.read(waveFile.get(), size)) {
 			if (errorDialog)
@@ -95,6 +112,8 @@ bool LoadAudioFile(const char *path, bool stream, bool errorDialog, SoundSample 
 			return false;
 		}
 		const int error = result.SetChunk(waveFile, size, isMp3);
+#endif
+
 		if (error != 0) {
 			if (errorDialog)
 				ErrSdl();
@@ -109,6 +128,9 @@ std::optional<SdlMutex> duplicateSoundsMutex;
 
 SoundSample *DuplicateSound(const SoundSample &sound)
 {
+#ifdef __DREAMCAST__
+	return nullptr;
+#endif
 	auto duplicate = std::make_unique<SoundSample>();
 	if (duplicate->DuplicateFrom(sound) != 0)
 		return nullptr;
@@ -175,11 +197,13 @@ void snd_play_snd(TSnd *pSnd, int lVolume, int lPan)
 	}
 
 	SoundSample *sound = &pSnd->DSB;
+#ifndef __DREAMCAST__
 	if (sound->IsPlaying()) {
 		sound = DuplicateSound(*sound);
 		if (sound == nullptr)
 			return;
 	}
+#endif
 
 	sound->PlayWithVolumeAndPan(lVolume, *sgOptions.Audio.soundVolume, lPan);
 	pSnd->start_tc = tc;
@@ -211,6 +235,18 @@ void snd_init()
 	sgOptions.Audio.musicVolume.SetValue(CapVolume(*sgOptions.Audio.musicVolume));
 	gbMusicOn = *sgOptions.Audio.musicVolume > VOLUME_MIN;
 
+#ifdef __DREAMCAST__
+	printf("snd_init() in sound.cpp\n");
+	gbMusicOn = true;
+	// spu_init();
+	::snd_init();
+	snd_stream_init();
+	// assert(1 == wav_init());
+	if (!wav_init()) {
+		LogError(LogCategory::Audio, "Failed to initialize audio (wav_init)");
+		return;
+	}
+#else
 	// Initialize the SDL_audiolib library. Set the output sample rate to
 	// 22kHz, the audio format to 16-bit signed, use 2 output channels
 	// (stereo), and a 2KiB output buffer.
@@ -221,6 +257,7 @@ void snd_init()
 	LogVerbose(LogCategory::Audio, "Aulib sampleRate={} channels={} frameSize={} format={:#x}",
 	    Aulib::sampleRate(), Aulib::channelCount(), Aulib::frameSize(), Aulib::sampleFormat());
 
+#endif
 	duplicateSoundsMutex.emplace();
 	gbSndInited = true;
 }
@@ -228,7 +265,14 @@ void snd_init()
 void snd_deinit()
 {
 	if (gbSndInited) {
+		printf("snd_deinit() in sound.cpp\n");
+#ifdef __DREAMCAST__
+		wav_shutdown();
+		snd_stream_shutdown();
+		::snd_shutdown();
+#else
 		Aulib::quit();
+#endif
 		duplicateSoundsMutex = std::nullopt;
 	}
 
@@ -259,12 +303,14 @@ _music_id GetLevelMusic(dungeon_type dungeonType)
 
 void music_stop()
 {
+	Log("music_stop()");
 	music.Release();
 	sgnMusicTrack = NUM_MUSIC;
 }
 
 void music_start(_music_id nTrack)
 {
+	Log("music_start()");
 	const char *trackPath;
 
 	assert(nTrack < NUM_MUSIC);
@@ -276,12 +322,15 @@ void music_start(_music_id nTrack)
 	else
 		trackPath = MusicTracks[nTrack];
 
+	Log("    trackPath = {}", trackPath);
 #ifdef DISABLE_STREAMING_MUSIC
 	const bool stream = false;
 #else
 	const bool stream = true;
 #endif
+	Log("    stream = {}", stream);
 	if (!LoadAudioFile(trackPath, stream, /*errorDialog=*/false, music)) {
+		Log("    LoadAudioFile failed");
 		music_stop();
 		return;
 	}
@@ -295,7 +344,9 @@ void music_start(_music_id nTrack)
 		return;
 	}
 
+	Log("    music.Play()");
 	sgnMusicTrack = nTrack;
+	Log("    sgnMusicTrack = {}", (int)sgnMusicTrack);
 }
 
 void sound_disable_music(bool disable)
@@ -332,12 +383,14 @@ int sound_get_or_set_sound_volume(int volume)
 
 void music_mute()
 {
+	Log("music_mute");
 	if (music.IsLoaded())
 		music.Mute();
 }
 
 void music_unmute()
 {
+	Log("music_unmute");
 	if (music.IsLoaded())
 		music.Unmute();
 }

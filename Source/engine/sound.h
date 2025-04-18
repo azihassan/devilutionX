@@ -13,6 +13,13 @@
 #include "utils/attributes.h"
 
 #ifndef NOSOUND
+#ifdef __DREAMCAST__
+#include "memory_stats.h"
+#include "sndwav.h"
+#include <dc/sound/sound.h>
+#include <dc/spu.h>
+#endif
+
 #include "utils/soundsample.h"
 #endif
 

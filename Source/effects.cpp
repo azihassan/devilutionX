@@ -261,8 +261,16 @@ void effects_cleanup_sfx()
 
 void sound_init()
 {
+#ifdef __DREAMCAST__
+	bool isDreamcast = true;
+#else
+	bool isDreamcast = false;
+#endif
 	uint8_t mask = sfx_MISC;
-	if (gbIsMultiplayer) {
+	// only load the SFX of the current character on the dreamcast
+	// because it still doesn't have network multiplayer mode
+	// so we only need the sfx of the player's class
+	if (gbIsMultiplayer && !isDreamcast) {
 		mask |= sfx_WARRIOR;
 		if (!gbIsSpawn)
 			mask |= (sfx_ROGUE | sfx_SORCERER);
@@ -304,7 +312,12 @@ void effects_play_sound(SfxID id)
 	}
 
 	TSFX &sfx = sgSFX[static_cast<int16_t>(id)];
+#ifdef __DREAMCAST__
+	//todo figure out why isPlaying() always returns true after sound effect is played the first time
+	if (sfx.pSnd != nullptr/* && !sfx.pSnd->isPlaying()*/) {
+#else
 	if (sfx.pSnd != nullptr && !sfx.pSnd->isPlaying()) {
+#endif
 		snd_play_snd(sfx.pSnd.get(), 0, 0);
 	}
 }
