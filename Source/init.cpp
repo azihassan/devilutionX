@@ -101,8 +101,14 @@ std::optional<MpqArchive> LoadMPQ(const std::vector<std::string> &paths, std::st
 	std::optional<MpqArchive> archive;
 	std::string mpqAbsPath;
 	std::int32_t error = 0;
+#ifdef __DREAMCAST__
+	Log("Searching for {}", mpqName);
+#endif
 	for (const auto &path : paths) {
 		mpqAbsPath = path + mpqName.data();
+#ifdef __DREAMCAST__
+		Log("Checking path: {}", mpqAbsPath);
+#endif
 		if ((archive = MpqArchive::Open(mpqAbsPath.c_str(), error))) {
 			LogVerbose("  Found: {} in {}", mpqName, path);
 			return archive;
@@ -195,7 +201,12 @@ bool CheckDevilutionXMpqVersion(AssetRef &&ref)
 
 bool CheckExtraFontsVersion(AssetRef &&ref)
 {
+#ifdef __DREAMCAST__
+	// Bypass version check for Dreamcast to troubleshoot
+	return false;
+#else
 	return !AssetContentsEq(std::move(ref), ExtraFontsVersion);
+#endif
 }
 
 } // namespace

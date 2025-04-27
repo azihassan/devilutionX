@@ -17,6 +17,14 @@ void ReadOnlyTest()
 	const std::string path = paths::PrefPath() + "Diablo1ReadOnlyTest.foo";
 	SDL_RWops *file = SDL_RWFromFile(path.c_str(), "w");
 	if (file == nullptr) {
+#ifdef __DREAMCAST__
+		// Check if the error is related to VMU paths and we're in suppression mode
+		extern bool suppressVmuErrors;
+		if (suppressVmuErrors && paths::PrefPath().find("/vmu") != std::string::npos) {
+			// Skip showing the error dialog for VMU paths while we're trying them
+			return;
+		}
+#endif
 		DirErrorDlg(paths::PrefPath());
 	}
 
